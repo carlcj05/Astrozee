@@ -1,0 +1,853 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		30217F792E69CEF100800987 /* PlanetPositionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30217F782E69CE0B00800987 /* PlanetPositionsView.swift */; };
+		30217F7A2E69CF0400800987 /* ProfileFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30217F772E69CDDB00800987 /* ProfileFormView.swift */; };
+		30217F7B2E69CF0800800987 /* ProfileListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30217F762E69CDC800800987 /* ProfileListView.swift */; };
+		30217F7C2E69CF0C00800987 /* Date+Julian.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30217F752E69CDBA00800987 /* Date+Julian.swift */; };
+		30217F7D2E69CF1200800987 /* ProfileStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30217F732E69CD8800800987 /* ProfileStore.swift */; };
+		30217F7E2E69CF1600800987 /* SwissEphemeris.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30217F6F2E69CCC600800987 /* SwissEphemeris.swift */; };
+		30217F7F2E69CF1A00800987 /* SEConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30217F6E2E69CC2900800987 /* SEConstants.swift */; };
+		30217F802E69CF1F00800987 /* PlanetPosition.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30217F712E69CD5900800987 /* PlanetPosition.swift */; };
+		30217F812E69CF2400800987 /* Profile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30217F702E69CD3D00800987 /* Profile.swift */; };
+		30217F862E69D9F800800987 /* LocationSearch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30217F852E69D9F100800987 /* LocationSearch.swift */; };
+		30217F8B2E6AE42100800987 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 30217F8A2E6AE42100800987 /* Assets.xcassets */; };
+		307F63B62E683D7D00645245 /* interpretations.json in Resources */ = {isa = PBXBuildFile; fileRef = 307F63B52E683D7D00645245 /* interpretations.json */; };
+		307F63C12E68473D00645245 /* seas_18.se1 in Resources */ = {isa = PBXBuildFile; fileRef = 307F63C02E68473D00645245 /* seas_18.se1 */; };
+		307F63C62E684A0B00645245 /* semo_18.se1 in Resources */ = {isa = PBXBuildFile; fileRef = 307F63C42E684A0B00645245 /* semo_18.se1 */; };
+		307F63C72E684A0B00645245 /* sepl_18.se1 in Resources */ = {isa = PBXBuildFile; fileRef = 307F63C52E684A0B00645245 /* sepl_18.se1 */; };
+		307F63CF2E684C4500645245 /* swedate.c in Sources */ = {isa = PBXBuildFile; fileRef = 307F63CA2E684C4500645245 /* swedate.c */; };
+		307F63D02E684C4500645245 /* sweph.c in Sources */ = {isa = PBXBuildFile; fileRef = 307F63CB2E684C4500645245 /* sweph.c */; };
+		307F63D72E68666A00645245 /* swehouse.c in Sources */ = {isa = PBXBuildFile; fileRef = 307F63D62E68666A00645245 /* swehouse.c */; };
+		307F63DF2E68770100645245 /* swejpl.c in Sources */ = {isa = PBXBuildFile; fileRef = 307F63DE2E68770100645245 /* swejpl.c */; };
+		307F63E32E68809400645245 /* swephlib.c in Sources */ = {isa = PBXBuildFile; fileRef = 307F63E22E68809400645245 /* swephlib.c */; };
+		307F63FF2E6885E300645245 /* swecl.c in Sources */ = {isa = PBXBuildFile; fileRef = 307F63F12E6885E300645245 /* swecl.c */; };
+		307F64002E6885E300645245 /* sweephe4.c in Sources */ = {isa = PBXBuildFile; fileRef = 307F63F32E6885E300645245 /* sweephe4.c */; };
+		307F64012E6885E300645245 /* swemmoon.c in Sources */ = {isa = PBXBuildFile; fileRef = 307F63F82E6885E300645245 /* swemmoon.c */; };
+		307F64032E6885E300645245 /* swehel.c in Sources */ = {isa = PBXBuildFile; fileRef = 307F63F42E6885E300645245 /* swehel.c */; };
+		307F64072E6885E300645245 /* swemplan.c in Sources */ = {isa = PBXBuildFile; fileRef = 307F63F92E6885E300645245 /* swemplan.c */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		307F638E2E6835F900645245 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 307F63742E6835F800645245 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 307F637B2E6835F800645245;
+			remoteInfo = Astrozee;
+		};
+		307F63982E6835F900645245 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 307F63742E6835F800645245 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 307F637B2E6835F800645245;
+			remoteInfo = Astrozee;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		30217F6E2E69CC2900800987 /* SEConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SEConstants.swift; sourceTree = "<group>"; };
+		30217F6F2E69CCC600800987 /* SwissEphemeris.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwissEphemeris.swift; sourceTree = "<group>"; };
+		30217F702E69CD3D00800987 /* Profile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Profile.swift; sourceTree = "<group>"; };
+		30217F712E69CD5900800987 /* PlanetPosition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanetPosition.swift; sourceTree = "<group>"; };
+		30217F732E69CD8800800987 /* ProfileStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileStore.swift; sourceTree = "<group>"; };
+		30217F752E69CDBA00800987 /* Date+Julian.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Date+Julian.swift"; sourceTree = "<group>"; };
+		30217F762E69CDC800800987 /* ProfileListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileListView.swift; sourceTree = "<group>"; };
+		30217F772E69CDDB00800987 /* ProfileFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileFormView.swift; sourceTree = "<group>"; };
+		30217F782E69CE0B00800987 /* PlanetPositionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanetPositionsView.swift; sourceTree = "<group>"; };
+		30217F852E69D9F100800987 /* LocationSearch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationSearch.swift; sourceTree = "<group>"; };
+		30217F8A2E6AE42100800987 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		307F637C2E6835F800645245 /* Astrozee.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Astrozee.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		307F638D2E6835F900645245 /* AstrozeeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AstrozeeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		307F63972E6835F900645245 /* AstrozeeUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AstrozeeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		307F63B52E683D7D00645245 /* interpretations.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = interpretations.json; sourceTree = "<group>"; };
+		307F63C02E68473D00645245 /* seas_18.se1 */ = {isa = PBXFileReference; lastKnownFileType = file; path = seas_18.se1; sourceTree = "<group>"; };
+		307F63C42E684A0B00645245 /* semo_18.se1 */ = {isa = PBXFileReference; lastKnownFileType = file; path = semo_18.se1; sourceTree = "<group>"; };
+		307F63C52E684A0B00645245 /* sepl_18.se1 */ = {isa = PBXFileReference; lastKnownFileType = file; path = sepl_18.se1; sourceTree = "<group>"; };
+		307F63CA2E684C4500645245 /* swedate.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = swedate.c; sourceTree = "<group>"; };
+		307F63CB2E684C4500645245 /* sweph.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = sweph.c; sourceTree = "<group>"; };
+		307F63CC2E684C4500645245 /* swephexp.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = swephexp.h; sourceTree = "<group>"; };
+		307F63D32E68637800645245 /* sweodef.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = sweodef.h; sourceTree = "<group>"; };
+		307F63D42E68639F00645245 /* swehouse.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = swehouse.h; sourceTree = "<group>"; };
+		307F63D52E68651A00645245 /* Astrozee-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Astrozee-Bridging-Header.h"; sourceTree = "<group>"; };
+		307F63D62E68666A00645245 /* swehouse.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = swehouse.c; sourceTree = "<group>"; };
+		307F63D82E6867E900645245 /* swejpl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = swejpl.h; sourceTree = "<group>"; };
+		307F63DB2E6874FC00645245 /* sweph.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = sweph.h; sourceTree = "<group>"; };
+		307F63DC2E68756200645245 /* swephlib.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = swephlib.h; sourceTree = "<group>"; };
+		307F63DD2E68759900645245 /* swenut2000a.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = swenut2000a.h; sourceTree = "<group>"; };
+		307F63DE2E68770100645245 /* swejpl.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = swejpl.c; sourceTree = "<group>"; };
+		307F63E22E68809400645245 /* swephlib.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = swephlib.c; sourceTree = "<group>"; };
+		307F63E82E68847800645245 /* libSwiftUI.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libSwiftUI.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
+		307F63F12E6885E300645245 /* swecl.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = swecl.c; sourceTree = "<group>"; };
+		307F63F32E6885E300645245 /* sweephe4.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = sweephe4.c; sourceTree = "<group>"; };
+		307F63F42E6885E300645245 /* swehel.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = swehel.c; sourceTree = "<group>"; };
+		307F63F82E6885E300645245 /* swemmoon.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = swemmoon.c; sourceTree = "<group>"; };
+		307F63F92E6885E300645245 /* swemplan.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = swemplan.c; sourceTree = "<group>"; };
+		307F640D2E68867C00645245 /* swedate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = swedate.h; sourceTree = "<group>"; };
+		307F640E2E68867C00645245 /* swedll.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = swedll.h; sourceTree = "<group>"; };
+		307F640F2E68867C00645245 /* sweephe4.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = sweephe4.h; sourceTree = "<group>"; };
+		307F64122E68867C00645245 /* swemptab.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = swemptab.h; sourceTree = "<group>"; };
+		307F64182E68867C00645245 /* swevents.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = swevents.h; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		307F637E2E6835F800645245 /* Astrozee */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Astrozee;
+			sourceTree = "<group>";
+		};
+		307F63902E6835F900645245 /* AstrozeeTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = AstrozeeTests;
+			sourceTree = "<group>";
+		};
+		307F639A2E6835F900645245 /* AstrozeeUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = AstrozeeUITests;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		307F63792E6835F800645245 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		307F638A2E6835F900645245 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		307F63942E6835F900645245 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		307F63E62E68847800645245 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		30217F6D2E69CC1000800987 /* Ephemeris */ = {
+			isa = PBXGroup;
+			children = (
+				30217F6F2E69CCC600800987 /* SwissEphemeris.swift */,
+				30217F6E2E69CC2900800987 /* SEConstants.swift */,
+				307F63D52E68651A00645245 /* Astrozee-Bridging-Header.h */,
+			);
+			path = Ephemeris;
+			sourceTree = "<group>";
+		};
+		30217F722E69CD8200800987 /* Stores */ = {
+			isa = PBXGroup;
+			children = (
+				30217F732E69CD8800800987 /* ProfileStore.swift */,
+			);
+			path = Stores;
+			sourceTree = "<group>";
+		};
+		30217F742E69CDB300800987 /* Utils */ = {
+			isa = PBXGroup;
+			children = (
+				30217F752E69CDBA00800987 /* Date+Julian.swift */,
+			);
+			path = Utils;
+			sourceTree = "<group>";
+		};
+		30217F872E69DAAA00800987 /* Geo */ = {
+			isa = PBXGroup;
+			children = (
+				30217F852E69D9F100800987 /* LocationSearch.swift */,
+			);
+			path = Geo;
+			sourceTree = "<group>";
+		};
+		307F63732E6835F800645245 = {
+			isa = PBXGroup;
+			children = (
+				30217F8A2E6AE42100800987 /* Assets.xcassets */,
+				307F63C82E684C1200645245 /* ThirdParty */,
+				307F63AD2E68372100645245 /* Ressources */,
+				307F63AC2E68371A00645245 /* UI */,
+				307F63AB2E68371400645245 /* Core */,
+				307F637E2E6835F800645245 /* Astrozee */,
+				307F63902E6835F900645245 /* AstrozeeTests */,
+				307F639A2E6835F900645245 /* AstrozeeUITests */,
+				307F637D2E6835F800645245 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		307F637D2E6835F800645245 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				307F637C2E6835F800645245 /* Astrozee.app */,
+				307F638D2E6835F900645245 /* AstrozeeTests.xctest */,
+				307F63972E6835F900645245 /* AstrozeeUITests.xctest */,
+				307F63E82E68847800645245 /* libSwiftUI.dylib */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		307F63AA2E68370900645245 /* models */ = {
+			isa = PBXGroup;
+			children = (
+				30217F712E69CD5900800987 /* PlanetPosition.swift */,
+				30217F702E69CD3D00800987 /* Profile.swift */,
+			);
+			path = models;
+			sourceTree = "<group>";
+		};
+		307F63AB2E68371400645245 /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				30217F872E69DAAA00800987 /* Geo */,
+				30217F742E69CDB300800987 /* Utils */,
+				30217F722E69CD8200800987 /* Stores */,
+				30217F6D2E69CC1000800987 /* Ephemeris */,
+				307F63AA2E68370900645245 /* models */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		307F63AC2E68371A00645245 /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				30217F782E69CE0B00800987 /* PlanetPositionsView.swift */,
+				30217F772E69CDDB00800987 /* ProfileFormView.swift */,
+				30217F762E69CDC800800987 /* ProfileListView.swift */,
+			);
+			path = UI;
+			sourceTree = "<group>";
+		};
+		307F63AD2E68372100645245 /* Ressources */ = {
+			isa = PBXGroup;
+			children = (
+				307F63C42E684A0B00645245 /* semo_18.se1 */,
+				307F63C52E684A0B00645245 /* sepl_18.se1 */,
+				307F63C02E68473D00645245 /* seas_18.se1 */,
+				307F63B52E683D7D00645245 /* interpretations.json */,
+			);
+			path = Ressources;
+			sourceTree = "<group>";
+		};
+		307F63C82E684C1200645245 /* ThirdParty */ = {
+			isa = PBXGroup;
+			children = (
+				307F63C92E684C2400645245 /* SwissEphemeris */,
+			);
+			path = ThirdParty;
+			sourceTree = "<group>";
+		};
+		307F63C92E684C2400645245 /* SwissEphemeris */ = {
+			isa = PBXGroup;
+			children = (
+				307F640D2E68867C00645245 /* swedate.h */,
+				307F640E2E68867C00645245 /* swedll.h */,
+				307F640F2E68867C00645245 /* sweephe4.h */,
+				307F64122E68867C00645245 /* swemptab.h */,
+				307F64182E68867C00645245 /* swevents.h */,
+				307F63F12E6885E300645245 /* swecl.c */,
+				307F63F32E6885E300645245 /* sweephe4.c */,
+				307F63F42E6885E300645245 /* swehel.c */,
+				307F63F82E6885E300645245 /* swemmoon.c */,
+				307F63F92E6885E300645245 /* swemplan.c */,
+				307F63E22E68809400645245 /* swephlib.c */,
+				307F63DD2E68759900645245 /* swenut2000a.h */,
+				307F63DB2E6874FC00645245 /* sweph.h */,
+				307F63D82E6867E900645245 /* swejpl.h */,
+				307F63CC2E684C4500645245 /* swephexp.h */,
+				307F63DC2E68756200645245 /* swephlib.h */,
+				307F63D42E68639F00645245 /* swehouse.h */,
+				307F63D32E68637800645245 /* sweodef.h */,
+				307F63CA2E684C4500645245 /* swedate.c */,
+				307F63D62E68666A00645245 /* swehouse.c */,
+				307F63DE2E68770100645245 /* swejpl.c */,
+				307F63CB2E684C4500645245 /* sweph.c */,
+			);
+			path = SwissEphemeris;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		307F63E42E68847800645245 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		307F637B2E6835F800645245 /* Astrozee */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 307F63A12E6835F900645245 /* Build configuration list for PBXNativeTarget "Astrozee" */;
+			buildPhases = (
+				307F63782E6835F800645245 /* Sources */,
+				307F63792E6835F800645245 /* Frameworks */,
+				307F637A2E6835F800645245 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				307F637E2E6835F800645245 /* Astrozee */,
+			);
+			name = Astrozee;
+			packageProductDependencies = (
+			);
+			productName = Astrozee;
+			productReference = 307F637C2E6835F800645245 /* Astrozee.app */;
+			productType = "com.apple.product-type.application";
+		};
+		307F638C2E6835F900645245 /* AstrozeeTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 307F63A42E6835F900645245 /* Build configuration list for PBXNativeTarget "AstrozeeTests" */;
+			buildPhases = (
+				307F63892E6835F900645245 /* Sources */,
+				307F638A2E6835F900645245 /* Frameworks */,
+				307F638B2E6835F900645245 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				307F638F2E6835F900645245 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				307F63902E6835F900645245 /* AstrozeeTests */,
+			);
+			name = AstrozeeTests;
+			packageProductDependencies = (
+			);
+			productName = AstrozeeTests;
+			productReference = 307F638D2E6835F900645245 /* AstrozeeTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		307F63962E6835F900645245 /* AstrozeeUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 307F63A72E6835F900645245 /* Build configuration list for PBXNativeTarget "AstrozeeUITests" */;
+			buildPhases = (
+				307F63932E6835F900645245 /* Sources */,
+				307F63942E6835F900645245 /* Frameworks */,
+				307F63952E6835F900645245 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				307F63992E6835F900645245 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				307F639A2E6835F900645245 /* AstrozeeUITests */,
+			);
+			name = AstrozeeUITests;
+			packageProductDependencies = (
+			);
+			productName = AstrozeeUITests;
+			productReference = 307F63972E6835F900645245 /* AstrozeeUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		307F63E72E68847800645245 /* SwiftUI */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 307F63EE2E68847800645245 /* Build configuration list for PBXNativeTarget "SwiftUI" */;
+			buildPhases = (
+				307F63E42E68847800645245 /* Headers */,
+				307F63E52E68847800645245 /* Sources */,
+				307F63E62E68847800645245 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = SwiftUI;
+			packageProductDependencies = (
+			);
+			productName = SwiftUI;
+			productReference = 307F63E82E68847800645245 /* libSwiftUI.dylib */;
+			productType = "com.apple.product-type.library.dynamic";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		307F63742E6835F800645245 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1620;
+				LastUpgradeCheck = 1620;
+				TargetAttributes = {
+					307F637B2E6835F800645245 = {
+						CreatedOnToolsVersion = 16.2;
+						LastSwiftMigration = 1620;
+					};
+					307F638C2E6835F900645245 = {
+						CreatedOnToolsVersion = 16.2;
+						TestTargetID = 307F637B2E6835F800645245;
+					};
+					307F63962E6835F900645245 = {
+						CreatedOnToolsVersion = 16.2;
+						TestTargetID = 307F637B2E6835F800645245;
+					};
+					307F63E72E68847800645245 = {
+						CreatedOnToolsVersion = 16.2;
+					};
+				};
+			};
+			buildConfigurationList = 307F63772E6835F800645245 /* Build configuration list for PBXProject "Astrozee" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 307F63732E6835F800645245;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 307F637D2E6835F800645245 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				307F637B2E6835F800645245 /* Astrozee */,
+				307F638C2E6835F900645245 /* AstrozeeTests */,
+				307F63962E6835F900645245 /* AstrozeeUITests */,
+				307F63E72E68847800645245 /* SwiftUI */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		307F637A2E6835F800645245 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				307F63C62E684A0B00645245 /* semo_18.se1 in Resources */,
+				307F63C72E684A0B00645245 /* sepl_18.se1 in Resources */,
+				30217F8B2E6AE42100800987 /* Assets.xcassets in Resources */,
+				307F63B62E683D7D00645245 /* interpretations.json in Resources */,
+				307F63C12E68473D00645245 /* seas_18.se1 in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		307F638B2E6835F900645245 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		307F63952E6835F900645245 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		307F63782E6835F800645245 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				30217F812E69CF2400800987 /* Profile.swift in Sources */,
+				307F63E32E68809400645245 /* swephlib.c in Sources */,
+				307F63FF2E6885E300645245 /* swecl.c in Sources */,
+				307F64002E6885E300645245 /* sweephe4.c in Sources */,
+				30217F7C2E69CF0C00800987 /* Date+Julian.swift in Sources */,
+				307F64012E6885E300645245 /* swemmoon.c in Sources */,
+				30217F7E2E69CF1600800987 /* SwissEphemeris.swift in Sources */,
+				30217F802E69CF1F00800987 /* PlanetPosition.swift in Sources */,
+				307F64032E6885E300645245 /* swehel.c in Sources */,
+				307F64072E6885E300645245 /* swemplan.c in Sources */,
+				30217F792E69CEF100800987 /* PlanetPositionsView.swift in Sources */,
+				30217F7A2E69CF0400800987 /* ProfileFormView.swift in Sources */,
+				30217F7F2E69CF1A00800987 /* SEConstants.swift in Sources */,
+				307F63D72E68666A00645245 /* swehouse.c in Sources */,
+				30217F7D2E69CF1200800987 /* ProfileStore.swift in Sources */,
+				307F63CF2E684C4500645245 /* swedate.c in Sources */,
+				307F63D02E684C4500645245 /* sweph.c in Sources */,
+				30217F7B2E69CF0800800987 /* ProfileListView.swift in Sources */,
+				307F63DF2E68770100645245 /* swejpl.c in Sources */,
+				30217F862E69D9F800800987 /* LocationSearch.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		307F63892E6835F900645245 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		307F63932E6835F900645245 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		307F63E52E68847800645245 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		307F638F2E6835F900645245 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 307F637B2E6835F800645245 /* Astrozee */;
+			targetProxy = 307F638E2E6835F900645245 /* PBXContainerItemProxy */;
+		};
+		307F63992E6835F900645245 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 307F637B2E6835F800645245 /* Astrozee */;
+			targetProxy = 307F63982E6835F900645245 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		307F639F2E6835F900645245 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = "";
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OBJC_BRIDGING_HEADER = "";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		307F63A02E6835F900645245 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = "";
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OBJC_BRIDGING_HEADER = "";
+			};
+			name = Release;
+		};
+		307F63A22E6835F900645245 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = Astrozee/Astrozee.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "Astrozee/Preview\\ Content";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/Core/Ephemeris/Astrozee-Bridging-Header.h";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "Purge-Memory.Astrozee";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "$(PROJECT_DIR)/Core/Ephemeris/Astrozee-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		307F63A32E6835F900645245 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = Astrozee/Astrozee.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "Astrozee/Preview\\ Content";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/Core/Ephemeris/Astrozee-Bridging-Header.h";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "Purge-Memory.Astrozee";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "$(PROJECT_DIR)/Core/Ephemeris/Astrozee-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		307F63A52E6835F900645245 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "Purge-Memory.AstrozeeTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Astrozee.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Astrozee";
+			};
+			name = Debug;
+		};
+		307F63A62E6835F900645245 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "Purge-Memory.AstrozeeTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Astrozee.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Astrozee";
+			};
+			name = Release;
+		};
+		307F63A82E6835F900645245 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "Purge-Memory.AstrozeeUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = Astrozee;
+			};
+			name = Debug;
+		};
+		307F63A92E6835F900645245 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "Purge-Memory.AstrozeeUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = Astrozee;
+			};
+			name = Release;
+		};
+		307F63EF2E68847800645245 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				EXECUTABLE_PREFIX = lib;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
+		307F63F02E68847800645245 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				EXECUTABLE_PREFIX = lib;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		307F63772E6835F800645245 /* Build configuration list for PBXProject "Astrozee" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				307F639F2E6835F900645245 /* Debug */,
+				307F63A02E6835F900645245 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		307F63A12E6835F900645245 /* Build configuration list for PBXNativeTarget "Astrozee" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				307F63A22E6835F900645245 /* Debug */,
+				307F63A32E6835F900645245 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		307F63A42E6835F900645245 /* Build configuration list for PBXNativeTarget "AstrozeeTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				307F63A52E6835F900645245 /* Debug */,
+				307F63A62E6835F900645245 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		307F63A72E6835F900645245 /* Build configuration list for PBXNativeTarget "AstrozeeUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				307F63A82E6835F900645245 /* Debug */,
+				307F63A92E6835F900645245 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		307F63EE2E68847800645245 /* Build configuration list for PBXNativeTarget "SwiftUI" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				307F63EF2E68847800645245 /* Debug */,
+				307F63F02E68847800645245 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 307F63742E6835F800645245 /* Project object */;
+}
