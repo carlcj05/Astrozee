@@ -18,6 +18,9 @@
 		30217F812E69CF2400800987 /* Profile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30217F702E69CD3D00800987 /* Profile.swift */; };
 		30217F862E69D9F800800987 /* LocationSearch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30217F852E69D9F100800987 /* LocationSearch.swift */; };
 		30217F8B2E6AE42100800987 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 30217F8A2E6AE42100800987 /* Assets.xcassets */; };
+		306716722E96948C008E8A72 /* InterpretationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3067166F2E96948C008E8A72 /* InterpretationService.swift */; };
+		306716732E96948C008E8A72 /* TransitCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 306716702E96948C008E8A72 /* TransitCalculator.swift */; };
+		306716752E9694CC008E8A72 /* Transit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 306716742E9694C9008E8A72 /* Transit.swift */; };
 		307F63B62E683D7D00645245 /* interpretations.json in Resources */ = {isa = PBXBuildFile; fileRef = 307F63B52E683D7D00645245 /* interpretations.json */; };
 		307F63C12E68473D00645245 /* seas_18.se1 in Resources */ = {isa = PBXBuildFile; fileRef = 307F63C02E68473D00645245 /* seas_18.se1 */; };
 		307F63C62E684A0B00645245 /* semo_18.se1 in Resources */ = {isa = PBXBuildFile; fileRef = 307F63C42E684A0B00645245 /* semo_18.se1 */; };
@@ -63,6 +66,9 @@
 		30217F782E69CE0B00800987 /* PlanetPositionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanetPositionsView.swift; sourceTree = "<group>"; };
 		30217F852E69D9F100800987 /* LocationSearch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationSearch.swift; sourceTree = "<group>"; };
 		30217F8A2E6AE42100800987 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		3067166F2E96948C008E8A72 /* InterpretationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InterpretationService.swift; sourceTree = "<group>"; };
+		306716702E96948C008E8A72 /* TransitCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransitCalculator.swift; sourceTree = "<group>"; };
+		306716742E9694C9008E8A72 /* Transit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Transit.swift; sourceTree = "<group>"; };
 		307F637C2E6835F800645245 /* Astrozee.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Astrozee.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		307F638D2E6835F900645245 /* AstrozeeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AstrozeeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		307F63972E6835F900645245 /* AstrozeeUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AstrozeeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -180,6 +186,15 @@
 			path = Geo;
 			sourceTree = "<group>";
 		};
+		306716712E96948C008E8A72 /* Transits */ = {
+			isa = PBXGroup;
+			children = (
+				3067166F2E96948C008E8A72 /* InterpretationService.swift */,
+				306716702E96948C008E8A72 /* TransitCalculator.swift */,
+			);
+			path = Transits;
+			sourceTree = "<group>";
+		};
 		307F63732E6835F800645245 = {
 			isa = PBXGroup;
 			children = (
@@ -218,6 +233,8 @@
 		307F63AB2E68371400645245 /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				306716742E9694C9008E8A72 /* Transit.swift */,
+				306716712E96948C008E8A72 /* Transits */,
 				30217F872E69DAAA00800987 /* Geo */,
 				30217F742E69CDB300800987 /* Utils */,
 				30217F722E69CD8200800987 /* Stores */,
@@ -473,6 +490,7 @@
 				307F63FF2E6885E300645245 /* swecl.c in Sources */,
 				307F64002E6885E300645245 /* sweephe4.c in Sources */,
 				30217F7C2E69CF0C00800987 /* Date+Julian.swift in Sources */,
+				306716752E9694CC008E8A72 /* Transit.swift in Sources */,
 				307F64012E6885E300645245 /* swemmoon.c in Sources */,
 				30217F7E2E69CF1600800987 /* SwissEphemeris.swift in Sources */,
 				30217F802E69CF1F00800987 /* PlanetPosition.swift in Sources */,
@@ -485,6 +503,8 @@
 				30217F7D2E69CF1200800987 /* ProfileStore.swift in Sources */,
 				307F63CF2E684C4500645245 /* swedate.c in Sources */,
 				307F63D02E684C4500645245 /* sweph.c in Sources */,
+				306716722E96948C008E8A72 /* InterpretationService.swift in Sources */,
+				306716732E96948C008E8A72 /* TransitCalculator.swift in Sources */,
 				30217F7B2E69CF0800800987 /* ProfileListView.swift in Sources */,
 				307F63DF2E68770100645245 /* swejpl.c in Sources */,
 				30217F862E69D9F800800987 /* LocationSearch.swift in Sources */,
