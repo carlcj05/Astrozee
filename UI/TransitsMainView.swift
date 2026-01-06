@@ -3,7 +3,6 @@ import SwiftUI
 // MARK: - 1. LE VIEWMODEL (Le cerveau qui partage les données)
 class TransitViewModel: ObservableObject {
     @Published var selectedDate = Date()
-    @State var selectedTab = 0
     @Published var transits: [Transit] = []
     @Published var isCalculating = false
     @Published var calculationDone = false // Pour savoir si on affiche les résultats
@@ -33,24 +32,31 @@ class TransitViewModel: ObservableObject {
 struct TransitsMainView: View {
     let profile: Profile
     @StateObject private var viewModel = TransitViewModel()
-    @State private var activeTab = 0 // 0 = Config, 1 = Résultats
+    @State private var activeTab = 0 // 0 = Profil, 1 = Période, 2 = Résultats
     
     var body: some View {
         TabView(selection: $activeTab) {
             
-            // --- ONGLET 1 : SÉLECTION ---
-            TransitConfigurationView(profile: profile, viewModel: viewModel, activeTab: $activeTab)
+            // --- ONGLET 1 : PROFIL ---
+            TransitProfileView(profile: profile)
                 .tabItem {
-                    Label("Paramètres", systemImage: "gearshape")
+                    Label("Profil", systemImage: "person.crop.circle")
                 }
                 .tag(0)
             
-            // --- ONGLET 2 : RÉSULTATS ---
+            // --- ONGLET 2 : SÉLECTION ---
+            TransitDateSelectionView(profile: profile, viewModel: viewModel, activeTab: $activeTab)
+                .tabItem {
+                    Label("Période", systemImage: "calendar")
+                }
+                .tag(1)
+            
+            // --- ONGLET 3 : RÉSULTATS ---
             TransitResultsView(viewModel: viewModel)
                 .tabItem {
                     Label("Résultats", systemImage: "list.star")
                 }
-                .tag(1)
+                .tag(2)
         }
         .navigationTitle("Météo Astrale")
         // FIX MAC: On applique .inline uniquement sur iOS
@@ -60,11 +66,9 @@ struct TransitsMainView: View {
     }
 }
 
-// MARK: - 3. ONGLET CONFIGURATION (Sélection Date)
-struct TransitConfigurationView: View {
+// MARK: - 3. ONGLET PROFIL
+struct TransitProfileView: View {
     let profile: Profile
-    @ObservedObject var viewModel: TransitViewModel
-    @Binding var activeTab: Int
     
     var body: some View {
         ZStack {
@@ -94,7 +98,26 @@ struct TransitConfigurationView: View {
                 .cornerRadius(15)
                 .padding(.horizontal)
                 
-                // Carte Sélection Date
+                Spacer()
+            }
+            .padding(.top)
+        }
+    }
+}
+
+// MARK: - 4. ONGLET SÉLECTION (Mois + Calcul)
+struct TransitDateSelectionView: View {
+    let profile: Profile
+    @ObservedObject var viewModel: TransitViewModel
+    @Binding var activeTab: Int
+    
+    var body: some View {
+        ZStack {
+            #if os(iOS)
+            Color.gray.opacity(0.1).ignoresSafeArea()
+            #endif
+            
+            VStack(spacing: 30) {
                 VStack(alignment: .leading, spacing: 20) {
                     Text("Période d'analyse")
                         .font(.headline)
@@ -110,12 +133,10 @@ struct TransitConfigurationView: View {
                 
                 Spacer()
                 
-                // Bouton Calculer
                 Button(action: {
                     viewModel.calculate(for: profile)
-                    // On change d'onglet automatiquement après le clic
                     withAnimation {
-                        activeTab = 1
+                        activeTab = 2
                     }
                 }) {
                     HStack {
@@ -133,7 +154,7 @@ struct TransitConfigurationView: View {
                     .background(Color.indigo)
                     .cornerRadius(12)
                 }
-                .buttonStyle(.plain) // FIX MAC: Important pour que le bouton custom fonctionne bien
+                .buttonStyle(.plain)
                 .padding(.horizontal)
                 .padding(.bottom, 20)
             }
@@ -142,7 +163,7 @@ struct TransitConfigurationView: View {
     }
 }
 
-// MARK: - 4. ONGLET RÉSULTATS (La liste)
+// MARK: - 5. ONGLET RÉSULTATS (La liste)
 struct TransitResultsView: View {
     @ObservedObject var viewModel: TransitViewModel
     
@@ -157,7 +178,7 @@ struct TransitResultsView: View {
                 ContentUnavailableView(
                     "En attente",
                     systemImage: "arrow.left.circle",
-                    description: Text("Allez dans l'onglet 'Paramètres' pour lancer une analyse.")
+                    description: Text("Allez dans l'onglet 'Période' pour lancer une analyse.")
                 )
             } else if viewModel.transits.isEmpty {
                 // Calcul fait mais rien trouvé
@@ -169,7 +190,7 @@ struct TransitResultsView: View {
             } else {
                 // Affichage des résultats
                 List {
-                    Section(header: Text("Analyse de \(monthString(from: viewModel.selectedDate))")) {
+                    Section(header: Text("Analyse de \(monthTitle)")) {
                         ForEach(viewModel.transits) { transit in
                             TransitRow(transit: transit) // Utilise ta ligne existante
                         }
@@ -185,10 +206,10 @@ struct TransitResultsView: View {
         }
     }
     
-    func monthString(from date: Date) -> String {
+    private var monthTitle: String {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "fr_FR")
         formatter.dateFormat = "MMMM yyyy"
-        return formatter.string(from: date).capitalized
+        return formatter.string(from: viewModel.selectedDate).capitalized
     }
 }
