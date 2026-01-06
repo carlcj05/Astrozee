@@ -70,6 +70,8 @@ struct TransitsMainView: View {
 // MARK: - 3. ONGLET PROFIL
 struct TransitProfileView: View {
     let profile: Profile
+    @State private var natalPositions: [PlanetPosition] = []
+    @State private var selectedPlanet: PlanetPosition?
     
     var body: some View {
         ZStack {
@@ -99,9 +101,305 @@ struct TransitProfileView: View {
                 .cornerRadius(15)
                 .padding(.horizontal)
                 
+                VStack(alignment: .leading, spacing: 16) {
+                    HStack {
+                        Text("Thème natal")
+                            .font(.headline)
+                        Spacer()
+                        if let place = profile.placeName, !place.isEmpty {
+                            Text(place)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    
+                    if natalPositions.isEmpty {
+                        ContentUnavailableView(
+                            "Calcul en cours",
+                            systemImage: "sparkles",
+                            description: Text("Nous préparons le visuel astral de \(profile.name).")
+                        )
+                    } else {
+                        NatalChartView(positions: natalPositions, selectedPlanet: $selectedPlanet)
+                        
+                        NatalPlanetDetailCard(planet: selectedPlanet)
+                        
+                        NatalPlanetLegend(positions: natalPositions, selectedPlanet: $selectedPlanet)
+                    }
+                }
+                .padding()
+                .frame(maxWidth: .infinity)
+                .background(.ultraThinMaterial)
+                .cornerRadius(18)
+                .padding(.horizontal)
+                .shadow(color: Color.black.opacity(0.08), radius: 12, x: 0, y: 6)
+                
                 Spacer()
             }
             .padding(.top)
+        }
+        .task {
+            let positions = Ephemeris.shared.computePositionsUT(dateUT: profile.birthDateUTC())
+            withAnimation(.easeInOut(duration: 0.4)) {
+                natalPositions = positions
+                selectedPlanet = positions.first
+            }
+        }
+    }
+}
+
+// MARK: - Thème natal (visuel interactif)
+private struct NatalChartView: View {
+    let positions: [PlanetPosition]
+    @Binding var selectedPlanet: PlanetPosition?
+    
+    var body: some View {
+        GeometryReader { proxy in
+            let size = min(proxy.size.width, proxy.size.height)
+            let radius = size / 2
+            let center = CGPoint(x: proxy.size.width / 2, y: proxy.size.height / 2)
+            
+            ZStack {
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            gradient: Gradient(colors: [
+                                Color.indigo.opacity(0.12),
+                                Color.purple.opacity(0.06),
+                                Color.white
+                            ]),
+                            center: .center,
+                            startRadius: 12,
+                            endRadius: radius
+                        )
+                    )
+                
+                Circle()
+                    .stroke(Color.indigo.opacity(0.25), lineWidth: 2)
+                
+                Circle()
+                    .stroke(Color.indigo.opacity(0.12), style: StrokeStyle(lineWidth: 1, dash: [4, 6]))
+                    .padding(radius * 0.18)
+                
+                ForEach(0..<12, id: \.self) { index in
+                    let angle = Double(index) * 30.0 - 90.0
+                    let lineStart = point(on: angle, radius: radius * 0.38, center: center)
+                    let lineEnd = point(on: angle, radius: radius * 0.92, center: center)
+                    
+                    Path { path in
+                        path.move(to: lineStart)
+                        path.addLine(to: lineEnd)
+                    }
+                    .stroke(Color.indigo.opacity(0.12), lineWidth: 1)
+                    
+                    Text(zodiacSymbols[index])
+                        .font(.system(size: size * 0.06, weight: .semibold))
+                        .foregroundStyle(Color.indigo.opacity(0.7))
+                        .position(point(on: angle, radius: radius * 0.78, center: center))
+                }
+                
+                ForEach(positions) { planet in
+                    let angle = planet.longitude - 90.0
+                    let planetPoint = point(on: angle, radius: radius * 0.6, center: center)
+                    let isSelected = planet.id == selectedPlanet?.id
+                    
+                    Button {
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                            selectedPlanet = planet
+                        }
+                    } label: {
+                        Text(planetSymbol(for: planet.name))
+                            .font(.system(size: size * 0.08, weight: .bold))
+                            .foregroundStyle(isSelected ? Color.white : Color.indigo.opacity(0.85))
+                            .frame(width: size * 0.12, height: size * 0.12)
+                            .background(
+                                Circle()
+                                    .fill(isSelected ? Color.indigo : planetColor(for: planet.name))
+                            )
+                            .overlay(
+                                Circle()
+                                    .stroke(Color.white.opacity(0.7), lineWidth: isSelected ? 2 : 1)
+                            )
+                            .shadow(color: Color.indigo.opacity(isSelected ? 0.35 : 0.2), radius: 8, x: 0, y: 4)
+                    }
+                    .buttonStyle(.plain)
+                    .position(planetPoint)
+                }
+                
+                VStack(spacing: 4) {
+                    Text("Carte astrale")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Text("Touchez une planète")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+                .position(center)
+            }
+        }
+        .aspectRatio(1, contentMode: .fit)
+        .frame(maxWidth: 360)
+        .frame(maxWidth: .infinity)
+    }
+    
+    private func point(on angleDegrees: Double, radius: CGFloat, center: CGPoint) -> CGPoint {
+        let radians = angleDegrees * .pi / 180
+        let x = center.x + cos(radians) * radius
+        let y = center.y + sin(radians) * radius
+        return CGPoint(x: x, y: y)
+    }
+    
+    private func planetSymbol(for name: String) -> String {
+        switch name.lowercased() {
+        case "soleil": return "☉"
+        case "lune": return "☾"
+        case "mercure": return "☿"
+        case "vénus", "venus": return "♀"
+        case "mars": return "♂"
+        case "jupiter": return "♃"
+        case "saturne": return "♄"
+        case "uranus": return "♅"
+        case "neptune": return "♆"
+        case "pluton": return "♇"
+        case "nœud nord (vrai)", "noeud nord (vrai)": return "☊"
+        case "chiron": return "⚷"
+        default: return "✦"
+        }
+    }
+    
+    private func planetColor(for name: String) -> Color {
+        switch name.lowercased() {
+        case "soleil": return Color.orange.opacity(0.9)
+        case "lune": return Color.gray.opacity(0.6)
+        case "mercure": return Color.mint.opacity(0.7)
+        case "vénus", "venus": return Color.pink.opacity(0.7)
+        case "mars": return Color.red.opacity(0.75)
+        case "jupiter": return Color.teal.opacity(0.7)
+        case "saturne": return Color.brown.opacity(0.7)
+        case "uranus": return Color.cyan.opacity(0.7)
+        case "neptune": return Color.blue.opacity(0.7)
+        case "pluton": return Color.purple.opacity(0.7)
+        default: return Color.indigo.opacity(0.6)
+        }
+    }
+    
+    private var zodiacSymbols: [String] {
+        ["♈︎", "♉︎", "♊︎", "♋︎", "♌︎", "♍︎", "♎︎", "♏︎", "♐︎", "♑︎", "♒︎", "♓︎"]
+    }
+}
+
+private struct NatalPlanetDetailCard: View {
+    let planet: PlanetPosition?
+    
+    var body: some View {
+        Group {
+            if let planet {
+                HStack(spacing: 12) {
+                    Text(planetSymbol(for: planet.name))
+                        .font(.system(size: 28))
+                        .frame(width: 44, height: 44)
+                        .background(Color.indigo.opacity(0.12), in: Circle())
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(planet.name)
+                            .font(.headline)
+                        Text("\(planet.sign) • \(planet.degreeInSign)")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    
+                    Spacer()
+                    
+                    Text("Voir")
+                        .font(.caption)
+                        .foregroundStyle(.indigo)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(Color.indigo.opacity(0.12), in: Capsule())
+                }
+                .padding()
+                .frame(maxWidth: .infinity)
+                .background(Color.white.opacity(0.8))
+                .cornerRadius(14)
+            } else {
+                Text("Touchez une planète pour découvrir son influence.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+    
+    private func planetSymbol(for name: String) -> String {
+        switch name.lowercased() {
+        case "soleil": return "☉"
+        case "lune": return "☾"
+        case "mercure": return "☿"
+        case "vénus", "venus": return "♀"
+        case "mars": return "♂"
+        case "jupiter": return "♃"
+        case "saturne": return "♄"
+        case "uranus": return "♅"
+        case "neptune": return "♆"
+        case "pluton": return "♇"
+        case "nœud nord (vrai)", "noeud nord (vrai)": return "☊"
+        case "chiron": return "⚷"
+        default: return "✦"
+        }
+    }
+}
+
+private struct NatalPlanetLegend: View {
+    let positions: [PlanetPosition]
+    @Binding var selectedPlanet: PlanetPosition?
+    
+    private let columns = [
+        GridItem(.adaptive(minimum: 90), spacing: 12, alignment: .leading)
+    ]
+    
+    var body: some View {
+        LazyVGrid(columns: columns, spacing: 12) {
+            ForEach(positions) { planet in
+                let isSelected = planet.id == selectedPlanet?.id
+                Button {
+                    withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                        selectedPlanet = planet
+                    }
+                } label: {
+                    HStack(spacing: 8) {
+                        Text(planetSymbol(for: planet.name))
+                            .font(.system(size: 16))
+                            .frame(width: 24, height: 24)
+                            .background(Color.indigo.opacity(isSelected ? 0.22 : 0.1), in: Circle())
+                        Text(planet.name)
+                            .font(.caption)
+                            .foregroundStyle(.primary)
+                            .lineLimit(1)
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(isSelected ? Color.indigo.opacity(0.12) : Color.white.opacity(0.6))
+                    .cornerRadius(10)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+    
+    private func planetSymbol(for name: String) -> String {
+        switch name.lowercased() {
+        case "soleil": return "☉"
+        case "lune": return "☾"
+        case "mercure": return "☿"
+        case "vénus", "venus": return "♀"
+        case "mars": return "♂"
+        case "jupiter": return "♃"
+        case "saturne": return "♄"
+        case "uranus": return "♅"
+        case "neptune": return "♆"
+        case "pluton": return "♇"
+        case "nœud nord (vrai)", "noeud nord (vrai)": return "☊"
+        case "chiron": return "⚷"
+        default: return "✦"
         }
     }
 }
