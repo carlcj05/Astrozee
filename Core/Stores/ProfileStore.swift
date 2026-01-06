@@ -20,6 +20,7 @@ final class ProfileStore: ObservableObject {
         }
     }
 
+
     // déjà présent : suppression via IndexSet (glisser pour supprimer)
     func remove(at offsets: IndexSet) { profiles.remove(atOffsets: offsets); save() }
 

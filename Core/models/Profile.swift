@@ -1,21 +1,30 @@
 import Foundation
 
-struct Profile: Identifiable, Codable, Equatable, Hashable {
-    var id: UUID = UUID()
+// C'est le modèle unique utilisé par toute l'application maintenant
+struct Profile: Identifiable, Codable, Hashable {
+    let id: UUID
     var name: String
-    /// Date & heure locales de naissance
     var birthLocalDate: Date
-    /// Décalage de fuseau en minutes à la naissance (DST inclus)
-    var tzOffsetMinutes: Int
-    /// Lieu (facultatif mais utile)
+    var tzOffsetMinutes: Int // Décalage en minutes par rapport à GMT
+    
     var placeName: String?
     var latitude: Double?
     var longitude: Double?
-}
-
-extension Profile {
-    /// Convertit l’heure locale en UTC pour Swiss Ephemeris
+    
+    // Initialiseur par défaut
+    init(id: UUID = UUID(), name: String, birthLocalDate: Date, tzOffsetMinutes: Int, placeName: String? = nil, latitude: Double? = nil, longitude: Double? = nil) {
+        self.id = id
+        self.name = name
+        self.birthLocalDate = birthLocalDate
+        self.tzOffsetMinutes = tzOffsetMinutes
+        self.placeName = placeName
+        self.latitude = latitude
+        self.longitude = longitude
+    }
+    
+    // Helper pour obtenir la date UTC (nécessaire pour Swiss Ephemeris)
+    // Swiss Ephemeris a besoin de l'heure universelle, pas l'heure locale
     func birthDateUTC() -> Date {
-        birthLocalDate.addingTimeInterval(TimeInterval(-tzOffsetMinutes * 60))
+        return birthLocalDate.addingTimeInterval(TimeInterval(-tzOffsetMinutes * 60))
     }
 }
