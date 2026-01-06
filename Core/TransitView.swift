@@ -1,5 +1,7 @@
-//import SwiftUI
+import SwiftUI
 import Charts
+import AppKit
+import UniformTypeIdentifiers // <--- C'est ça qu'il manquait !
 
 struct TransitView: View {
     @State private var selectedDate = Date()
@@ -8,9 +10,9 @@ struct TransitView: View {
     var body: some View {
         VStack(spacing: 0) {
             
-            // --- HAUT DE PAGE : BOUTONS ---
+            // --- BARRE D'OUTILS ---
             HStack {
-                Text("📅 Période :")
+                Text("Période :")
                     .font(.headline)
                 
                 DatePicker("Date", selection: $selectedDate, displayedComponents: [.date])
@@ -46,7 +48,7 @@ struct TransitView: View {
                                 x: .value("Jour", item.date, unit: .day),
                                 y: .value("Intensité", item.score)
                             )
-                            .foregroundStyle(item.score > 0 ? Color.green : Color.red)
+                            .foregroundStyle(colorForScore(item.score))
                         }
                     }
                     .frame(height: 150)
@@ -76,12 +78,15 @@ struct TransitView: View {
                     Text(transit.text)
                         .font(.body)
                         .foregroundColor(.primary)
+                        .textSelection(.enabled)
                 }
                 .padding(.vertical, 5)
             }
         }
         .frame(minWidth: 800, minHeight: 600)
     }
+    
+    // --- LOGIQUE ---
     
     func lancerCalcul() {
         let calendar = Calendar.current
@@ -92,6 +97,12 @@ struct TransitView: View {
         transits = AstrologyEngine.shared.calculateTransits(month: month, year: year)
     }
     
+    func colorForScore(_ score: Double) -> Color {
+        if score > 0 { return .green }
+        if score < 0 { return .red }
+        return .gray
+    }
+    
     func exportCSV() {
         let fileName = "MesTransits.csv"
         var csvText = "Date;Aspect;Interpretation\n"
@@ -99,12 +110,13 @@ struct TransitView: View {
         for t in transits {
             let d = t.date.formatted(date: .numeric, time: .omitted)
             let a = "\(t.planetTransit) \(t.aspect) \(t.planetNatal)"
-            let i = t.text.replacingOccurrences(of: "\n", with: " ")
+            // On nettoie les sauts de ligne pour éviter de casser le CSV
+            let i = t.text.replacingOccurrences(of: "\n", with: " ").replacingOccurrences(of: ";", with: ",")
             csvText.append("\(d);\(a);\(i)\n")
         }
         
         let savePanel = NSSavePanel()
-        savePanel.allowedContentTypes = [.commaSeparatedText]
+        savePanel.allowedContentTypes = [.commaSeparatedText] // Nécessite UniformTypeIdentifiers
         savePanel.nameFieldStringValue = fileName
         savePanel.begin { response in
             if response == .OK, let url = savePanel.url {
@@ -113,9 +125,3 @@ struct TransitView: View {
         }
     }
 }
-//  TransitView.swift
-//  Astrozee
-//
-//  Created by Carl  Ozee on 06/01/2026.
-//
-

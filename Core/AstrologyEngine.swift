@@ -1,4 +1,4 @@
-//import Foundation
+import Foundation // <--- Cette ligne règle les erreurs Date, Calendar, UUID
 
 struct TransitResult: Identifiable {
     let id = UUID()
@@ -8,7 +8,6 @@ struct TransitResult: Identifiable {
     let planetNatal: String
     let text: String
     
-    // Score pour le graphique (Mood Chart)
     var score: Double {
         switch aspect.lowercased() {
         case "trigone", "sextile": return 10.0
@@ -26,9 +25,7 @@ class AstrologyEngine {
         var results: [TransitResult] = []
         let manager = InterpretationManager.shared
         
-        // --- SIMULATION DES DONNÉES (Pour tester l'affichage) ---
-        // Ici, on fait semblant d'avoir trouvé ces aspects ce mois-ci
-        // Ces planètes doivent exister dans ton JSON pour afficher le texte
+        // Données de test (simulation)
         let testData = [
             ("Jupiter", "carré", "Lune", 3),
             ("Jupiter", "carré", "Mars", 10),
@@ -45,11 +42,8 @@ class AstrologyEngine {
             components.day = day
             if let date = calendar.date(from: components) {
                 
-                // On cherche le texte correspondant dans ton JSON
                 let content = manager.getInterpretation(planetTransit: pT, aspect: asp, planetNatal: pN)
-                
-                // Si on trouve le texte dans le JSON, on l'affiche, sinon on met un message d'erreur
-                let finalText = content?.influence ?? "⚠️ Pas de texte trouvé dans le JSON pour : \(pT)|\(asp)|\(pN)"
+                let finalText = content?.influence ?? "Pas de texte trouvé pour : \(pT)|\(asp)|\(pN)"
                 
                 let result = TransitResult(
                     date: date,
@@ -65,9 +59,3 @@ class AstrologyEngine {
         return results.sorted(by: { $0.date < $1.date })
     }
 }
-//  AstrologyEngine.swift
-//  Astrozee
-//
-//  Created by Carl  Ozee on 06/01/2026.
-//
-
