@@ -12,8 +12,8 @@ final class InterpretationService {
     func loadInterpretations() {
         guard !isLoaded else { return }
         
-        guard let url = Bundle.main.url(forResource: "interpretation", withExtension: "json") else {
-            print("❌ Fichier interpretation.json introuvable dans le bundle")
+        guard let url = resolveInterpretationURL() else {
+                    print("❌ Fichier d'interprétation introuvable dans le bundle")
             return
         }
         
@@ -100,6 +100,24 @@ final class InterpretationService {
         }
     }
     
+    // MARK: - Résolution du fichier JSON
+       private func resolveInterpretationURL() -> URL? {
+           let candidates: [(resource: String, ext: String)] = [
+               ("interpretations", "json"),
+               ("interpretations.clean", "json"),
+               ("interpretations_clean", "json"),
+               ("interpretation", "json")
+           ]
+           
+           for candidate in candidates {
+               if let url = Bundle.main.url(forResource: candidate.resource, withExtension: candidate.ext) {
+                   return url
+               }
+           }
+           
+           return nil
+       }
+       
     // MARK: - Extraction des sections thématiques
     private func extractSection(from text: String, emoji: String) -> String? {
         guard text.contains(emoji) else { return nil }
