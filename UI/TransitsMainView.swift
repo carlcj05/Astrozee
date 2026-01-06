@@ -191,10 +191,6 @@ struct TransitResultsView: View {
                 )
             } else {
                 // Affichage des résultats
-                VStack(spacing: 12) {
-                    HStack {
-                        Spacer()
-                        Button {
                             isExportingCSV = true
                         } label: {
                             Label("Exporter CSV", systemImage: "square.and.arrow.up")
@@ -208,18 +204,10 @@ struct TransitResultsView: View {
                             ForEach(viewModel.transits) { transit in
                                 TransitRow(transit: transit) // Utilise ta ligne existante
                             }
+
                         }
                     }
                 }
-                // FIX MAC: Utiliser un style compatible Mac et iOS
-                #if os(macOS)
-                .listStyle(.inset)
-                #else
-                .listStyle(.insetGrouped)
-                #endif
-                .fileExporter(
-                    isPresented: $isExportingCSV,
-                    document: TransitCSVDocument(csv: csvContent),
                     contentType: .commaSeparatedText,
                     defaultFilename: "transits-\(fileNameMonth)"
                 ) { _ in }
@@ -244,10 +232,6 @@ struct TransitResultsView: View {
     private var csvContent: String {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "fr_FR")
-        formatter.dateFormat = "yyyy-MM-dd"
-        
-        let header = [
-            "Planete transit",
             "Aspect",
             "Planete natale",
             "Debut",
