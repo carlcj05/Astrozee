@@ -2,43 +2,46 @@ import SwiftUI
 
 struct PlanetPositionsView: View {
     let profile: Profile
+    
+    // On ne garde que les positions des planètes pour l'instant
     @State private var positions: [PlanetPosition] = []
 
     var body: some View {
-        VStack(spacing: 0) {
-            List(positions) { p in
-                HStack {
-                    VStack(alignment: .leading) {
-                        Text(p.name).font(.headline)
-                        Text(p.sign).font(.subheadline).foregroundStyle(.secondary)
+        List {
+            // Section unique : Les Planètes Natales
+            Section("Positions Natales") {
+                ForEach(positions) { p in
+                    HStack {
+                        VStack(alignment: .leading) {
+                            Text(p.name).font(.headline)
+                            Text(p.sign).font(.subheadline).foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        VStack(alignment: .trailing) {
+                            // Assure-toi que 'degreeInSign' existe dans ton modèle PlanetPosition
+                            // Sinon utilise : Text(String(format: "%.2f°", p.longitude))
+                            Text(p.degreeInSign).monospacedDigit()
+                            Text(String(format: "%.3f°/j", p.speed)).font(.caption).foregroundStyle(.secondary)
+                        }
                     }
-                    Spacer()
-                    VStack(alignment: .trailing) {
-                        Text(p.degreeInSign).monospacedDigit()
-                        Text(String(format: "%.3f°/j", p.speed)).font(.caption).foregroundStyle(.secondary)
-                    }
-                }.padding(.vertical, 4)
+                }
             }
-            Divider()
-            VStack(spacing: 6) {
-                Text("Naissance (local) : \(profile.birthLocalDate.shortLocalString())  —  TZ: \(profile.tzOffsetMinutes) min")
-                    .font(.footnote).foregroundStyle(.secondary)
-                Text("Calculé à partir de l’UTC : \(profile.birthDateUTC().shortLocalString()) (affiché en UTC)")
-                    .font(.footnote).foregroundStyle(.secondary)
-            }
-            .padding(8)
         }
         .navigationTitle(profile.name)
-        .onAppear(perform: compute)
+        .onAppear(perform: computePositions)
         .toolbar {
-            ToolbarItem(placement: .automatic) {
-                Button { compute() } label: { Image(systemName: "arrow.clockwise") }
+            ToolbarItem(placement: .primaryAction) {
+                // --- C'EST ICI LE CHANGEMENT ---
+                // On dirige vers TransitsMainView (celle avec les onglets)
+                NavigationLink(destination: TransitsMainView(profile: profile)) {
+                    Label("Transits", systemImage: "clock.arrow.circlepath")
+                }
             }
         }
-        .frame(minWidth: 520, minHeight: 520)
     }
 
-    private func compute() {
+    private func computePositions() {
+        // Calcul simple uniquement des planètes
         let dateUT = profile.birthDateUTC()
         positions = Ephemeris.shared.computePositionsUT(dateUT: dateUT)
     }
