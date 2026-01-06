@@ -191,6 +191,10 @@ struct TransitResultsView: View {
                 )
             } else {
                 // Affichage des résultats
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> Dev
                 VStack(spacing: 12) {
                     HStack {
                         Spacer()
@@ -208,6 +212,15 @@ struct TransitResultsView: View {
                             ForEach(viewModel.transits) { transit in
                                 TransitRow(transit: transit) // Utilise ta ligne existante
                             }
+<<<<<<< HEAD
+=======
+=======
+                List {
+                    Section(header: Text("Analyse de \(monthTitle)")) {
+                        ForEach(viewModel.transits) { transit in
+                            TransitRow(transit: transit) // Utilise ta ligne existante
+>>>>>>> Dev
+>>>>>>> Dev
                         }
                     }
                 }
@@ -232,6 +245,10 @@ struct TransitResultsView: View {
         formatter.locale = Locale(identifier: "fr_FR")
         formatter.dateFormat = "MMMM yyyy"
         return formatter.string(from: viewModel.selectedDate).capitalized
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> Dev
     }
 
     private var fileNameMonth: String {
@@ -341,5 +358,10 @@ struct TransitCSVDocument: FileDocument {
     
     func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
         FileWrapper(regularFileWithContents: Data(csv.utf8))
+<<<<<<< HEAD
+=======
+=======
+>>>>>>> Dev
+>>>>>>> Dev
     }
 }
