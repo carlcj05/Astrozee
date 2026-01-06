@@ -34,7 +34,7 @@ struct PlanetPositionsView: View {
                 // --- C'EST ICI LE CHANGEMENT ---
                 // On dirige vers TransitsMainView (celle avec les onglets)
                 NavigationLink(destination: TransitsMainView(profile: profile)) {
-                    Label("Transits", systemImage: "clock.arrow.circlepath")
+                    Label("Transits", systemImage: "arrow.right.circle")
                 }
             }
         }
