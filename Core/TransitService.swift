@@ -23,6 +23,17 @@ class TransitService {
         }
         
         let daysCount = range.count
+        guard let endOfMonth = calendar.date(byAdding: .day, value: daysCount - 1, to: startOfMonth) else {
+            return []
+        }
+        
+        // On élargit la fenêtre de calcul pour capturer les pics proches du mois cible
+        let bufferMonths = 3
+        guard let scanStart = calendar.date(byAdding: .month, value: -bufferMonths, to: startOfMonth),
+              let scanEnd = calendar.date(byAdding: .month, value: bufferMonths, to: endOfMonth) else {
+            return []
+        }
+        let scanDays = (calendar.dateComponents([.day], from: scanStart, to: scanEnd).day ?? 0) + 1
         
         // 2. Calculer les positions NATALES (fixes)
         let natalPlanets = Ephemeris.shared.computePositionsUT(dateUT: profile.birthDateUTC())
@@ -31,16 +42,13 @@ class TransitService {
         var rawData: [String: [DailyHit]] = [:]
         
         // 3. BOUCLE JOUR PAR JOUR (Le Scan)
-        for dayOffset in 0..<daysCount {
-            guard let currentDate = calendar.date(byAdding: .day, value: dayOffset, to: startOfMonth) else { continue }
+        for dayOffset in 0..<scanDays {
+            guard let currentDate = calendar.date(byAdding: .day, value: dayOffset, to: scanStart) else { continue }
             
             // Calculer positions du jour (Transit)
             let transitPlanets = Ephemeris.shared.computePositionsUT(dateUT: currentDate)
             
             for tPlanet in transitPlanets {
-                // On peut filtrer la Lune ici si tu veux comme en Python, sinon on garde tout
-                if tPlanet.name == "Lune" { continue }
-                
                 for nPlanet in natalPlanets {
                     // Calcul mathématique de la distance (nécessite Aspects.swift)
                     let dist = AspectCalculator.shortestDistance(tPlanet.longitude, nPlanet.longitude)
@@ -107,7 +115,11 @@ class TransitService {
         }
         
         // 5. Résultat final trié par date de pic
-        return finalTransits.sorted { $0.picDate < $1.picDate }
+        let monthTransits = finalTransits.filter { transit in
+            transit.startDate <= endOfMonth && transit.endDate >= startOfMonth
+        }
+        
+        return monthTransits.sorted { $0.picDate < $1.picDate }
     }
     
     // Helper pour transformer une liste de jours en un objet Transit complet

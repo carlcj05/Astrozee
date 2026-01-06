@@ -12,8 +12,8 @@ final class InterpretationService {
     func loadInterpretations() {
         guard !isLoaded else { return }
         
-        guard let url = Bundle.main.url(forResource: "interpretations.clean", withExtension: "json") else {
-            print("❌ Fichier interpretations.clean.json introuvable dans le bundle")
+        guard let url = Bundle.main.url(forResource: "interpretations", withExtension: "json") else {
+            print("❌ Fichier interpretations.json introuvable dans le bundle")
             return
         }
         
