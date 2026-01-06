@@ -18,9 +18,9 @@ class InterpretationManager: ObservableObject {
     }
     
     func loadJSON() {
-        // Le fichier doit s'appeler "interpretations_clean.json" dans Xcode
-        guard let url = Bundle.main.url(forResource: "interpretations_clean", withExtension: "json") else {
-            print("❌ ERREUR: Fichier interpretations_clean.json introuvable.")
+        // Le fichier doit s'appeler "interpretations.json" dans Xcode
+        guard let url = Bundle.main.url(forResource: "interpretations", withExtension: "json") else {
+            print("❌ ERREUR: Fichier interpretations.json introuvable.")
             return
         }
         

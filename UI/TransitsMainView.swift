@@ -158,6 +158,7 @@ private struct NatalChartView: View {
             let size = min(proxy.size.width, proxy.size.height)
             let radius = size / 2
             let center = CGPoint(x: proxy.size.width / 2, y: proxy.size.height / 2)
+            let chartRadius = radius * 0.84
             
             ZStack {
                 Circle()
@@ -176,15 +177,31 @@ private struct NatalChartView: View {
                 
                 Circle()
                     .stroke(Color.indigo.opacity(0.25), lineWidth: 2)
+                    .frame(width: chartRadius * 2, height: chartRadius * 2)
                 
                 Circle()
                     .stroke(Color.indigo.opacity(0.12), style: StrokeStyle(lineWidth: 1, dash: [4, 6]))
-                    .padding(radius * 0.18)
+                    .frame(width: chartRadius * 2, height: chartRadius * 2)
+                    .padding(chartRadius * 0.18)
+                
+                ForEach(0..<360, id: \.self) { degree in
+                    let isMajor = degree % 10 == 0
+                    let isMedium = degree % 5 == 0
+                    let lineLength = isMajor ? chartRadius * 0.12 : (isMedium ? chartRadius * 0.08 : chartRadius * 0.05)
+                    let lineStart = point(on: Double(degree) - 90.0, radius: chartRadius - lineLength, center: center)
+                    let lineEnd = point(on: Double(degree) - 90.0, radius: chartRadius, center: center)
+                    
+                    Path { path in
+                        path.move(to: lineStart)
+                        path.addLine(to: lineEnd)
+                    }
+                    .stroke(Color.indigo.opacity(isMajor ? 0.5 : 0.25), lineWidth: isMajor ? 1.2 : 0.8)
+                }
                 
                 ForEach(0..<12, id: \.self) { index in
                     let angle = Double(index) * 30.0 - 90.0
-                    let lineStart = point(on: angle, radius: radius * 0.38, center: center)
-                    let lineEnd = point(on: angle, radius: radius * 0.92, center: center)
+                    let lineStart = point(on: angle, radius: chartRadius * 0.38, center: center)
+                    let lineEnd = point(on: angle, radius: chartRadius * 0.98, center: center)
                     
                     Path { path in
                         path.move(to: lineStart)
@@ -195,12 +212,12 @@ private struct NatalChartView: View {
                     Text(zodiacSymbols[index])
                         .font(.system(size: size * 0.06, weight: .semibold))
                         .foregroundStyle(Color.indigo.opacity(0.7))
-                        .position(point(on: angle, radius: radius * 0.78, center: center))
+                        .position(point(on: angle, radius: chartRadius * 0.78, center: center))
                 }
                 
-                ForEach(positions) { planet in
-                    let angle = planet.longitude - 90.0
-                    let planetPoint = point(on: angle, radius: radius * 0.6, center: center)
+                ForEach(layoutPlanets(positions: positions, baseRadius: chartRadius * 0.64)) { layout in
+                    let planet = layout.planet
+                    let planetPoint = point(on: layout.angle, radius: layout.radius, center: center)
                     let isSelected = planet.id == selectedPlanet?.id
                     
                     Button {
@@ -209,18 +226,18 @@ private struct NatalChartView: View {
                         }
                     } label: {
                         Text(planetSymbol(for: planet.name))
-                            .font(.system(size: size * 0.08, weight: .bold))
-                            .foregroundStyle(isSelected ? Color.white : Color.indigo.opacity(0.85))
-                            .frame(width: size * 0.12, height: size * 0.12)
+                            .font(.system(size: size * 0.065, weight: .bold))
+                            .foregroundStyle(isSelected ? Color.white : Color.indigo.opacity(0.9))
+                            .frame(width: size * 0.095, height: size * 0.095)
                             .background(
                                 Circle()
                                     .fill(isSelected ? Color.indigo : planetColor(for: planet.name))
                             )
                             .overlay(
                                 Circle()
-                                    .stroke(Color.white.opacity(0.7), lineWidth: isSelected ? 2 : 1)
+                                    .stroke(Color.white.opacity(0.75), lineWidth: isSelected ? 2 : 0.8)
                             )
-                            .shadow(color: Color.indigo.opacity(isSelected ? 0.35 : 0.2), radius: 8, x: 0, y: 4)
+                            .shadow(color: Color.indigo.opacity(isSelected ? 0.35 : 0.15), radius: 6, x: 0, y: 3)
                     }
                     .buttonStyle(.plain)
                     .position(planetPoint)
@@ -283,9 +300,53 @@ private struct NatalChartView: View {
         }
     }
     
+    private func layoutPlanets(positions: [PlanetPosition], baseRadius: CGFloat) -> [PlanetLayout] {
+        let sorted = positions.sorted { $0.longitude < $1.longitude }
+        var layouts: [PlanetLayout] = []
+        var lastAngle: Double?
+        var stackIndex = 0
+        
+        for planet in sorted {
+            let angle = planet.longitude - 90.0
+            if let lastAngle, abs(normalize(angle - lastAngle)) < 8 {
+                stackIndex += 1
+            } else {
+                stackIndex = 0
+            }
+            
+            let radialOffset = CGFloat(stackIndex) * 14.0
+            let radius = baseRadius + radialOffset
+            layouts.append(
+                PlanetLayout(
+                    id: planet.id,
+                    planet: planet,
+                    angle: angle,
+                    radius: radius
+                )
+            )
+            lastAngle = angle
+        }
+        
+        return layouts
+    }
+    
+    private func normalize(_ delta: Double) -> Double {
+        var value = delta.truncatingRemainder(dividingBy: 360)
+        if value < -180 { value += 360 }
+        if value > 180 { value -= 360 }
+        return abs(value)
+    }
+    
     private var zodiacSymbols: [String] {
         ["♈︎", "♉︎", "♊︎", "♋︎", "♌︎", "♍︎", "♎︎", "♏︎", "♐︎", "♑︎", "♒︎", "♓︎"]
     }
+}
+
+private struct PlanetLayout: Identifiable {
+    let id: Int
+    let planet: PlanetPosition
+    let angle: Double
+    let radius: CGFloat
 }
 
 private struct NatalPlanetDetailCard: View {
