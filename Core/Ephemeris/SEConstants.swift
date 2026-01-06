@@ -46,3 +46,10 @@ func zodiacName(for eclipticLongitude: Double) -> String {
     let index = Int(floor(lon / 30.0))
     return ZODIAC_SIGNS[max(0, min(11, index))]
 }
+
+// --- SEConstants.swift --- (Ajoute ça à la fin)
+
+// Codes pour les systèmes de maisons (House Systems)
+let SE_HSYS_PLACIDUS: Int32 = 80  // Code ASCII pour 'P'
+let SE_HSYS_KOCH: Int32     = 75  // Code ASCII pour 'K'
+let SE_HSYS_WHOLE: Int32    = 87  // Code ASCII pour 'W' (Signes entiers)

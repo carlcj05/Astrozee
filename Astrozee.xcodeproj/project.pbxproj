@@ -38,6 +38,8 @@
 		30E4878E2F0D106A00E3CB34 /* InterpretationModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30E4878D2F0D106200E3CB34 /* InterpretationModel.swift */; };
 		30E487902F0D109900E3CB34 /* AstrologyEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30E4878F2F0D109200E3CB34 /* AstrologyEngine.swift */; };
 		30E487922F0D10BD00E3CB34 /* TransitView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30E487912F0D10B600E3CB34 /* TransitView.swift */; };
+		30E487982F0D201B00E3CB34 /* TransitService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30E487972F0D201900E3CB34 /* TransitService.swift */; };
+		30E4879A2F0D217200E3CB34 /* Aspects.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30E487992F0D217000E3CB34 /* Aspects.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -106,6 +108,8 @@
 		30E4878D2F0D106200E3CB34 /* InterpretationModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InterpretationModel.swift; sourceTree = "<group>"; };
 		30E4878F2F0D109200E3CB34 /* AstrologyEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AstrologyEngine.swift; sourceTree = "<group>"; };
 		30E487912F0D10B600E3CB34 /* TransitView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransitView.swift; sourceTree = "<group>"; };
+		30E487972F0D201900E3CB34 /* TransitService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransitService.swift; sourceTree = "<group>"; };
+		30E487992F0D217000E3CB34 /* Aspects.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Aspects.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -239,6 +243,8 @@
 		307F63AB2E68371400645245 /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				30E487992F0D217000E3CB34 /* Aspects.swift */,
+				30E487972F0D201900E3CB34 /* TransitService.swift */,
 				30E487912F0D10B600E3CB34 /* TransitView.swift */,
 				30E4878F2F0D109200E3CB34 /* AstrologyEngine.swift */,
 				306716742E9694C9008E8A72 /* Transit.swift */,
@@ -503,6 +509,7 @@
 				306716752E9694CC008E8A72 /* Transit.swift in Sources */,
 				307F64012E6885E300645245 /* swemmoon.c in Sources */,
 				30217F7E2E69CF1600800987 /* SwissEphemeris.swift in Sources */,
+				30E4879A2F0D217200E3CB34 /* Aspects.swift in Sources */,
 				30217F802E69CF1F00800987 /* PlanetPosition.swift in Sources */,
 				307F64032E6885E300645245 /* swehel.c in Sources */,
 				307F64072E6885E300645245 /* swemplan.c in Sources */,
@@ -518,6 +525,7 @@
 				306716722E96948C008E8A72 /* InterpretationService.swift in Sources */,
 				306716732E96948C008E8A72 /* TransitCalculator.swift in Sources */,
 				30217F7B2E69CF0800800987 /* ProfileListView.swift in Sources */,
+				30E487982F0D201B00E3CB34 /* TransitService.swift in Sources */,
 				307F63DF2E68770100645245 /* swejpl.c in Sources */,
 				30217F862E69D9F800800987 /* LocationSearch.swift in Sources */,
 			);
