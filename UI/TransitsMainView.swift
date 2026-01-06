@@ -191,23 +191,10 @@ struct TransitResultsView: View {
                 )
             } else {
                 // Affichage des résultats
-                VStack(spacing: 12) {
-                    HStack {
-                        Spacer()
-                        Button {
-                            isExportingCSV = true
-                        } label: {
-                            Label("Exporter CSV", systemImage: "square.and.arrow.up")
-                        }
-                        .buttonStyle(.borderedProminent)
-                    }
-                    .padding(.horizontal)
-                    
-                    List {
-                        Section(header: Text("Analyse de \(monthTitle)")) {
-                            ForEach(viewModel.transits) { transit in
-                                TransitRow(transit: transit) // Utilise ta ligne existante
-                            }
+                List {
+                    Section(header: Text("Analyse de \(monthTitle)")) {
+                        ForEach(viewModel.transits) { transit in
+                            TransitRow(transit: transit) // Utilise ta ligne existante
                         }
                     }
                 }
@@ -217,12 +204,6 @@ struct TransitResultsView: View {
                 #else
                 .listStyle(.insetGrouped)
                 #endif
-                .fileExporter(
-                    isPresented: $isExportingCSV,
-                    document: TransitCSVDocument(csv: csvContent),
-                    contentType: .commaSeparatedText,
-                    defaultFilename: "transits-\(fileNameMonth)"
-                ) { _ in }
             }
         }
     }
@@ -233,114 +214,4 @@ struct TransitResultsView: View {
         formatter.dateFormat = "MMMM yyyy"
         return formatter.string(from: viewModel.selectedDate).capitalized
     }
-
-    private var fileNameMonth: String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "fr_FR")
-        formatter.dateFormat = "MMMM-yyyy"
-        return formatter.string(from: viewModel.selectedDate).lowercased()
-    }
-    
-    private var csvContent: String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "fr_FR")
-        formatter.dateFormat = "yyyy-MM-dd"
-        
-        let header = [
-            "Planete transit",
-            "Aspect",
-            "Planete natale",
-            "Debut",
-            "Fin",
-            "Pic",
-            "Orbe",
-            "Influence",
-            "Meteo",
-            "Signification"
-        ].joined(separator: ",")
-        
-        let rows = viewModel.transits.map { transit in
-            let interpretation = InterpretationService.shared.getInterpretation(for: transit)
-            let signification = formatInterpretation(interpretation)
-            let row = [
-                csvField(transit.transitPlanet),
-                csvField(transit.aspect.displayName),
-                csvField(transit.natalPlanet),
-                csvField(formatter.string(from: transit.startDate)),
-                csvField(formatter.string(from: transit.endDate)),
-                csvField(formatter.string(from: transit.picDate)),
-                csvField(String(format: "%.2f", transit.orbe)),
-                csvField(influence(for: transit)),
-                csvField(transit.meteo),
-                csvField(signification)
-            ]
-            return row.joined(separator: ",")
-        }
-        
-        return ([header] + rows).joined(separator: "\n")
-    }
-    
-    private func csvField(_ value: String) -> String {
-        let escaped = value.replacingOccurrences(of: "\"", with: "\"\"")
-        return "\"\(escaped)\""
-    }
-    
-    private func formatInterpretation(_ interpretation: TransitInterpretation?) -> String {
-        guard let interpretation else { return "" }
-        let sections: [String] = [
-            interpretation.essence.map { "Essence: \($0)" },
-            interpretation.ceQuiPeutArriver.map { "Ce qui peut arriver: \($0)" },
-            interpretation.relations.map { "Relations: \($0)" },
-            interpretation.travail.map { "Travail: \($0)" },
-            interpretation.aEviter.map { "A éviter: \($0)" },
-            interpretation.aFaire.map { "A faire: \($0)" },
-            interpretation.motsCles.map { "Mots-cles: \($0)" },
-            !interpretation.conseils.isEmpty ? "Conseils: \(interpretation.conseils)" : nil
-        ].compactMap { $0 }
-        
-        if sections.isEmpty {
-            return interpretation.influence
-        }
-        
-        return sections.joined(separator: "\n")
-    }
-    
-    private func influence(for transit: Transit) -> String {
-        let calendar = Calendar.current
-        let picMonth = calendar.component(.month, from: transit.picDate)
-        let referenceMonth = calendar.component(.month, from: viewModel.selectedDate)
-        
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "fr_FR")
-        formatter.dateFormat = "MMMM"
-        let referenceMonthName = formatter.string(from: viewModel.selectedDate).capitalized
-        
-        if picMonth == referenceMonth {
-            return "pic en \(referenceMonthName) 🔥"
-        }
-        
-        if abs(picMonth - referenceMonth) == 1 {
-            return "pic 1 mois avant/après 🔭"
-        }
-        
-        return "pic plus d'un mois après \(referenceMonthName) 📡"
-    }
 }
-
-struct TransitCSVDocument: FileDocument {
-    static var readableContentTypes: [UTType] { [.commaSeparatedText] }
-    var csv: String
-    
-    init(csv: String) {
-        self.csv = csv
-    }
-    
-    init(configuration: ReadConfiguration) throws {
-        csv = ""
-    }
-    
-    func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
-        FileWrapper(regularFileWithContents: Data(csv.utf8))
-    }
-}
-
