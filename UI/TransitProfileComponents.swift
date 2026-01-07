@@ -132,7 +132,7 @@ struct NatalChartView: View {
             }
         }
         .aspectRatio(1, contentMode: .fit)
-        .frame(maxWidth: 360)
+        .frame(height: 360)
         .frame(maxWidth: .infinity)
     }
     
