@@ -86,81 +86,81 @@ struct TransitProfileView: View {
             Color.gray.opacity(0.1).ignoresSafeArea() // Fond gris clair sur iOS
             #endif
             
-            VStack(spacing: 30) {
-                
-                // Carte d'info Profil
-                VStack(spacing: 8) {
-                    Image(systemName: "person.crop.circle.fill")
-                        .font(.system(size: 60))
-                        .foregroundStyle(.indigo)
-                        .padding(.bottom, 5)
+            ScrollView {
+                VStack(spacing: 30) {
+                    // Carte d'info Profil
+                    VStack(spacing: 8) {
+                        Image(systemName: "person.crop.circle.fill")
+                            .font(.system(size: 60))
+                            .foregroundStyle(.indigo)
+                            .padding(.bottom, 5)
+                        
+                        Text("Analyse pour \(profile.name)")
+                            .font(.title2).bold()
+                        
+                        Text("Né(e) le \(profile.birthLocalDate.formatted(date: .abbreviated, time: .shortened))")
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    // FIX MAC: Fond blanc sur iOS, transparent ou adapté sur Mac
+                    .background(Color.white.opacity(0.8))
+                    .cornerRadius(15)
+                    .padding(.horizontal)
                     
-                    Text("Analyse pour \(profile.name)")
-                        .font(.title2).bold()
-                    
-                    Text("Né(e) le \(profile.birthLocalDate.formatted(date: .abbreviated, time: .shortened))")
-                        .foregroundStyle(.secondary)
-                }
-                .padding()
-                .frame(maxWidth: .infinity)
-                // FIX MAC: Fond blanc sur iOS, transparent ou adapté sur Mac
-                .background(Color.white.opacity(0.8))
-                .cornerRadius(15)
-                .padding(.horizontal)
-                
-                VStack(alignment: .leading, spacing: 16) {
-                    HStack {
-                        Text("Thème natal")
-                            .font(.headline)
-                        Spacer()
-                        if let place = profile.placeName, !place.isEmpty {
-                            Text(place)
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
+                    VStack(alignment: .leading, spacing: 16) {
+                        HStack {
+                            Text("Thème natal")
+                                .font(.headline)
+                            Spacer()
+                            if let place = profile.placeName, !place.isEmpty {
+                                Text(place)
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        
+                        if natalPositions.isEmpty {
+                            ContentUnavailableView(
+                                "Calcul en cours",
+                                systemImage: "sparkles",
+                                description: Text("Nous préparons le visuel astral de \(profile.name).")
+                            )
+                        } else {
+                            NatalChartView(
+                                positions: natalPositions,
+                                houseCusps: houseCusps,
+                                angles: chartAngles,
+                                selectedPlanet: $selectedPlanet
+                            )
+                            
+                            NatalPlanetDetailCard(planet: selectedPlanet)
+                            
+                            NatalPlanetLegend(positions: natalPositions, selectedPlanet: $selectedPlanet)
+
+                            NatalDualitySection(result: dualityResult)
+
+                            NatalAnglesSection(angles: displayChartAngles, points: displayChartPoints)
+
+                            NatalHousesSection(cusps: displayHouseCusps)
+
+                            if profile.latitude == nil || profile.longitude == nil {
+                                Text("Ajoute une ville pour obtenir les maisons, l'Ascendant et le Milieu du Ciel.")
+                                    .font(.footnote)
+                                    .foregroundStyle(.secondary)
+                            }
                         }
                     }
-                    
-                    if natalPositions.isEmpty {
-                        ContentUnavailableView(
-                            "Calcul en cours",
-                            systemImage: "sparkles",
-                            description: Text("Nous préparons le visuel astral de \(profile.name).")
-                        )
-                    } else {
-                        NatalChartView(
-                            positions: natalPositions,
-                            houseCusps: houseCusps,
-                            angles: chartAngles,
-                            selectedPlanet: $selectedPlanet
-                        )
-                        
-                        NatalPlanetDetailCard(planet: selectedPlanet)
-                        
-                        NatalPlanetLegend(positions: natalPositions, selectedPlanet: $selectedPlanet)
-
-                        NatalDualitySection(result: dualityResult)
-
-                        NatalAnglesSection(angles: displayChartAngles, points: displayChartPoints)
-
-                        NatalHousesSection(cusps: displayHouseCusps)
-
-                        if profile.latitude == nil || profile.longitude == nil {
-                            Text("Ajoute une ville pour obtenir les maisons, l'Ascendant et le Milieu du Ciel.")
-                                .font(.footnote)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .background(.ultraThinMaterial)
+                    .cornerRadius(18)
+                    .padding(.horizontal)
+                    .shadow(color: Color.black.opacity(0.08), radius: 12, x: 0, y: 6)
                 }
-                .padding()
-                .frame(maxWidth: .infinity)
-                .background(.ultraThinMaterial)
-                .cornerRadius(18)
-                .padding(.horizontal)
-                .shadow(color: Color.black.opacity(0.08), radius: 12, x: 0, y: 6)
-                
-                Spacer()
+                .padding(.top)
+                .padding(.bottom, 24)
             }
-            .padding(.top)
         }
         .task {
             let positions = Ephemeris.shared.computePositionsUT(dateUT: profile.birthDateUTC())
@@ -867,3 +867,4 @@ struct TransitCSVDocument: FileDocument {
         FileWrapper(regularFileWithContents: Data(csv.utf8))
     }
 }
+
