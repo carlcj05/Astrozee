@@ -312,40 +312,7 @@ struct TransitProfileView: View {
             addPolarity(for: ascendant.sign, weight: 3)
         }
 
-        for position in positions {
-            guard let house = houseIndex(for: position.longitude, cusps: cusps) else { continue }
-            if [1, 4, 7, 10].contains(house) {
-                masculineScore += 1
-            } else {
-                feminineScore += 1
-            }
-        }
-
-        if positions.contains(where: { $0.name.lowercased() == "soleil" }) {
-            masculineScore += 1
-        }
-        if positions.contains(where: { $0.name.lowercased() == "mars" }) {
-            masculineScore += 1
-        }
-        if positions.contains(where: { $0.name.lowercased() == "lune" }) {
-            feminineScore += 1
-        }
-        if positions.contains(where: { $0.name.lowercased() == "neptune" }) {
-            feminineScore += 1
-        }
-
-        if let ascendant = angles.first(where: { $0.id == "asc" }),
-           let ruler = ascendantRuler(for: ascendant.sign, positions: positions) {
-            addPolarity(for: ruler.sign, weight: 2)
-        }
-
-        if let sun = positions.first(where: { $0.name.lowercased() == "soleil" }) {
-            addPolarity(for: sun.sign, weight: 1)
-        }
-        if let moon = positions.first(where: { $0.name.lowercased() == "lune" }) {
-            addPolarity(for: moon.sign, weight: 1)
-        }
-
+        
         let total = max(masculineScore + feminineScore, 1)
         let masculine = masculineScore / total
         let feminine = feminineScore / total

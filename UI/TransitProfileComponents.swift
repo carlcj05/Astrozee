@@ -408,6 +408,8 @@ struct DualityDonutView: View {
     var body: some View {
         let masculinePercent = Int(round(normalizedMasculine * 100))
         let femininePercent = 100 - masculinePercent
+        let masculineColor = Color(red: 0.6, green: 0.9216, blue: 1.0)
+        let feminineColor = Color(red: 0.9451, green: 0.6, blue: 1.0)
 
         VStack(spacing: 12) {
             ZStack {
@@ -416,12 +418,12 @@ struct DualityDonutView: View {
 
                 Circle()
                     .trim(from: 0, to: normalizedMasculine)
-                    .stroke(Color.black.opacity(0.85), style: StrokeStyle(lineWidth: 18, lineCap: .butt))
+                    .stroke(masculineColor, style: StrokeStyle(lineWidth: 18, lineCap: .butt))
                     .rotationEffect(.degrees(-90))
 
                 Circle()
                     .trim(from: normalizedMasculine, to: 1)
-                    .stroke(Color.gray.opacity(0.35), style: StrokeStyle(lineWidth: 18, lineCap: .butt))
+                    .stroke(feminineColor, style: StrokeStyle(lineWidth: 18, lineCap: .butt))
                     .rotationEffect(.degrees(-90))
 
                 Text("Dualité")
@@ -431,8 +433,8 @@ struct DualityDonutView: View {
             .frame(width: 140, height: 140)
 
             HStack(spacing: 20) {
-                DualityLabel(symbol: "♂", title: "Masculin", percent: masculinePercent, color: Color.black.opacity(0.85))
-                DualityLabel(symbol: "♀", title: "Féminin", percent: femininePercent, color: Color.gray.opacity(0.7))
+                DualityLabel(symbol: "♂", title: "Masculin", percent: masculinePercent, color: masculineColor)
+                DualityLabel(symbol: "♀", title: "Féminin", percent: femininePercent, color: feminineColor)
             }
         }
     }
