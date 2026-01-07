@@ -466,20 +466,35 @@ struct TransitResultsView: View {
                     }
                     .padding(.horizontal)
                     
-                    List {
-                        Section(header: Text("Analyse de \(monthTitle)")) {
-                            ForEach(viewModel.transits) { transit in
-                                TransitRow(transit: transit) // Utilise ta ligne existante
+                    ScrollView([.vertical, .horizontal]) {
+                        LazyVStack(alignment: .leading, spacing: 16) {
+                            Text("Analyse de \(monthTitle)")
+                                .font(.headline)
+                                .padding(.horizontal, 8)
+                            
+                            ForEach(groupedTransits, id: \.group) { section in
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text(section.group.title)
+                                        .font(.subheadline.weight(.semibold))
+                                        .foregroundStyle(.secondary)
+                                    
+                                    Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 8) {
+                                        TransitTableHeader()
+                                        ForEach(section.transits) { transit in
+                                            TransitTableRow(transit: transit, referenceDate: viewModel.selectedDate)
+                                        }
+                                    }
+                                }
+                                .padding()
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .background(.ultraThinMaterial)
+                                .cornerRadius(16)
                             }
                         }
+                        .padding(.horizontal)
+                        .padding(.bottom, 8)
                     }
                 }
-                // FIX MAC: Utiliser un style compatible Mac et iOS
-                #if os(macOS)
-                .listStyle(.inset)
-                #else
-                .listStyle(.insetGrouped)
-                #endif
                 .fileExporter(
                     isPresented: $isExportingCSV,
                     document: TransitCSVDocument(csv: csvContent),
@@ -588,6 +603,172 @@ struct TransitResultsView: View {
         
         return "pic plus d'un mois après \(referenceMonthName) 📡"
     }
+
+    private var groupedTransits: [(group: InfluenceGroup, transits: [Transit])] {
+        let calendar = Calendar.current
+        let referenceMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: viewModel.selectedDate)) ?? viewModel.selectedDate
+        let grouped = Dictionary(grouping: viewModel.transits) { transit in
+            let picMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: transit.picDate)) ?? transit.picDate
+            let delta = calendar.dateComponents([.month], from: referenceMonth, to: picMonth).month ?? 0
+            if delta == 0 {
+                return InfluenceGroup.currentMonth
+            }
+            if abs(delta) == 1 {
+                return InfluenceGroup.oneMonthOffset
+            }
+            return InfluenceGroup.moreThanOneMonth
+        }
+
+        return InfluenceGroup.allCases.compactMap { group in
+            guard let transits = grouped[group] else { return nil }
+            let sorted = transits.sorted { $0.picDate < $1.picDate }
+            return (group, sorted)
+        }
+    }
+}
+
+private enum InfluenceGroup: Int, CaseIterable, Hashable, Identifiable {
+    case currentMonth
+    case oneMonthOffset
+    case moreThanOneMonth
+
+    var id: Int { rawValue }
+
+    var title: String {
+        switch self {
+        case .currentMonth:
+            return "Pic du mois"
+        case .oneMonthOffset:
+            return "Pic 1 mois avant/après"
+        case .moreThanOneMonth:
+            return "Pic plus d'un mois après"
+        }
+    }
+}
+
+private struct TransitTableHeader: View {
+    var body: some View {
+        GridRow {
+            headerCell("Pic", width: TransitColumnWidth.pic)
+            headerCell("Planète transit", width: TransitColumnWidth.planet)
+            headerCell("Aspect", width: TransitColumnWidth.aspect)
+            headerCell("Planète natale", width: TransitColumnWidth.planet)
+            headerCell("Début", width: TransitColumnWidth.date)
+            headerCell("Fin", width: TransitColumnWidth.date)
+            headerCell("Orbe", width: TransitColumnWidth.orbe)
+            headerCell("Influence", width: TransitColumnWidth.influence)
+            headerCell("Météo", width: TransitColumnWidth.meteo)
+            headerCell("Signification", width: TransitColumnWidth.signification)
+        }
+        .font(.caption.weight(.semibold))
+        .foregroundStyle(.secondary)
+    }
+
+    private func headerCell(_ text: String, width: CGFloat) -> some View {
+        Text(text)
+            .frame(width: width, alignment: .leading)
+    }
+}
+
+private struct TransitTableRow: View {
+    let transit: Transit
+    let referenceDate: Date
+
+    private var interpretation: TransitInterpretation? {
+        InterpretationService.shared.getInterpretation(for: transit)
+    }
+
+    var body: some View {
+        GridRow {
+            cell(picText, width: TransitColumnWidth.pic)
+            cell(transit.transitPlanet.capitalized, width: TransitColumnWidth.planet)
+            aspectCell
+            cell(transit.natalPlanet.capitalized, width: TransitColumnWidth.planet)
+            cell(dateText(transit.startDate), width: TransitColumnWidth.date)
+            cell(dateText(transit.endDate), width: TransitColumnWidth.date)
+            cell(String(format: "%.2f°", transit.orbe), width: TransitColumnWidth.orbe)
+            cell(influenceText, width: TransitColumnWidth.influence)
+            cell(transit.meteo, width: TransitColumnWidth.meteo)
+            cell(significationText, width: TransitColumnWidth.signification)
+        }
+        Divider()
+    }
+
+    private var picText: String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "fr_FR")
+        formatter.dateFormat = "dd MMM"
+        return formatter.string(from: transit.picDate)
+    }
+
+    private func dateText(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "fr_FR")
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        return formatter.string(from: date)
+    }
+
+    private var influenceText: String {
+        let calendar = Calendar.current
+        let picMonth = calendar.component(.month, from: transit.picDate)
+        let referenceMonth = calendar.component(.month, from: referenceDate)
+
+        if picMonth == referenceMonth {
+            return "pic du mois"
+        }
+        if abs(picMonth - referenceMonth) == 1 {
+            return "pic 1 mois avant/après"
+        }
+        return "pic plus d'un mois après"
+    }
+
+    private var significationText: String {
+        let essence = interpretation?.essence?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let influence = interpretation?.influence.trimmingCharacters(in: .whitespacesAndNewlines)
+        let motsCles = interpretation?.motsCles?.trimmingCharacters(in: .whitespacesAndNewlines)
+        return essence?.isEmpty == false ? essence! : (motsCles?.isEmpty == false ? motsCles! : (influence ?? "—"))
+    }
+
+    private var aspectCell: some View {
+        Text(transit.aspect.displayName)
+            .font(.caption.weight(.semibold))
+            .padding(.vertical, 4)
+            .padding(.horizontal, 6)
+            .frame(width: TransitColumnWidth.aspect, alignment: .leading)
+            .background(colorForAspect(transit.aspect).opacity(0.12))
+            .cornerRadius(6)
+            .foregroundStyle(colorForAspect(transit.aspect))
+    }
+
+    private func cell(_ text: String, width: CGFloat) -> some View {
+        Text(text)
+            .font(.subheadline)
+            .frame(width: width, alignment: .leading)
+            .lineLimit(2)
+    }
+
+    private func colorForAspect(_ aspect: AspectType) -> Color {
+        switch aspect {
+        case .carre, .opposition:
+            return .red
+        case .sextile, .trigone:
+            return .green
+        case .conjonction:
+            return .blue
+        }
+    }
+}
+
+private enum TransitColumnWidth {
+    static let pic: CGFloat = 80
+    static let planet: CGFloat = 130
+    static let aspect: CGFloat = 110
+    static let date: CGFloat = 130
+    static let orbe: CGFloat = 70
+    static let influence: CGFloat = 170
+    static let meteo: CGFloat = 70
+    static let signification: CGFloat = 280
 }
 
 struct TransitCSVDocument: FileDocument {
