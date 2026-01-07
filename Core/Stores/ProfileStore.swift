@@ -1,5 +1,6 @@
 import Foundation
 
+
 final class ProfileStore: ObservableObject {
     @Published private(set) var profiles: [Profile] = []
 
@@ -46,6 +47,7 @@ final class ProfileStore: ObservableObject {
         do {
             let data = try JSONEncoder().encode(profiles)
             try data.write(to: fileURL, options: .atomic)
+            
         } catch {
             print("[ProfileStore] Save error:", error)
         }
