@@ -431,6 +431,7 @@ struct TransitDateSelectionView: View {
 struct TransitResultsView: View {
     @ObservedObject var viewModel: TransitViewModel
     @State private var isExportingCSV = false
+    @State private var selectedSignification: String?
     
     var body: some View {
         VStack {
@@ -466,33 +467,40 @@ struct TransitResultsView: View {
                     }
                     .padding(.horizontal)
                     
-                    ScrollView([.vertical, .horizontal]) {
-                        LazyVStack(alignment: .leading, spacing: 16) {
-                            Text("Analyse de \(monthTitle)")
-                                .font(.headline)
-                                .padding(.horizontal, 8)
-                            
-                            ForEach(groupedTransits, id: \.group) { section in
-                                VStack(alignment: .leading, spacing: 8) {
-                                    Text(section.group.title)
-                                        .font(.subheadline.weight(.semibold))
-                                        .foregroundStyle(.secondary)
-                                    
-                                    Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 8) {
-                                        TransitTableHeader()
-                                        ForEach(section.transits) { transit in
-                                            TransitTableRow(transit: transit, referenceDate: viewModel.selectedDate)
+                    ScrollView(.horizontal) {
+                        ScrollView(.vertical) {
+                            LazyVStack(alignment: .leading, spacing: 16) {
+                                Text("Analyse de \(monthTitle)")
+                                    .font(.headline)
+                                    .padding(.horizontal, 8)
+                                
+                                ForEach(groupedTransits, id: \.group) { section in
+                                    VStack(alignment: .leading, spacing: 8) {
+                                        Text(section.group.title)
+                                            .font(.subheadline.weight(.semibold))
+                                            .foregroundStyle(.secondary)
+                                        
+                                        Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 8) {
+                                            TransitTableHeader()
+                                            ForEach(section.transits) { transit in
+                                                TransitTableRow(
+                                                    transit: transit,
+                                                    referenceDate: viewModel.selectedDate,
+                                                    selectedSignification: $selectedSignification
+                                                )
+                                            }
                                         }
                                     }
+                                    .padding()
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .background(.ultraThinMaterial)
+                                    .cornerRadius(16)
                                 }
-                                .padding()
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .background(.ultraThinMaterial)
-                                .cornerRadius(16)
                             }
+                            .frame(minWidth: TransitColumnWidth.totalWidth, alignment: .leading)
+                            .padding(.horizontal)
+                            .padding(.bottom, 8)
                         }
-                        .padding(.horizontal)
-                        .padding(.bottom, 8)
                     }
                 }
                 .fileExporter(
@@ -503,6 +511,16 @@ struct TransitResultsView: View {
                 ) { _ in }
             }
         }
+        .overlay {
+            if let selectedSignification {
+                SignificationZoomView(
+                    text: selectedSignification,
+                    isPresented: $selectedSignification
+                )
+                .transition(.scale.combined(with: .opacity))
+            }
+        }
+        .animation(.easeInOut(duration: 0.2), value: selectedSignification)
     }
     
     private var monthTitle: String {
@@ -673,6 +691,7 @@ private struct TransitTableHeader: View {
 private struct TransitTableRow: View {
     let transit: Transit
     let referenceDate: Date
+    @Binding var selectedSignification: String?
 
     private var interpretation: TransitInterpretation? {
         InterpretationService.shared.getInterpretation(for: transit)
@@ -689,7 +708,7 @@ private struct TransitTableRow: View {
             cell(String(format: "%.2f°", transit.orbe), width: TransitColumnWidth.orbe)
             cell(influenceText, width: TransitColumnWidth.influence)
             cell(transit.meteo, width: TransitColumnWidth.meteo)
-            cell(significationText, width: TransitColumnWidth.signification)
+            significationCell
         }
         Divider()
     }
@@ -748,6 +767,18 @@ private struct TransitTableRow: View {
             .lineLimit(2)
     }
 
+    private var significationCell: some View {
+        Text(significationText)
+            .font(.subheadline)
+            .frame(width: TransitColumnWidth.signification, alignment: .leading)
+            .lineLimit(2)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                guard significationText != "—" else { return }
+                selectedSignification = significationText
+            }
+    }
+
     private func colorForAspect(_ aspect: AspectType) -> Color {
         switch aspect {
         case .carre, .opposition:
@@ -756,6 +787,54 @@ private struct TransitTableRow: View {
             return .green
         case .conjonction:
             return .blue
+        }
+    }
+}
+
+private struct SignificationZoomView: View {
+    let text: String
+    @Binding var isPresented: String?
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.35)
+                .ignoresSafeArea()
+                .onTapGesture {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        isPresented = nil
+                    }
+                }
+
+            VStack(alignment: .leading, spacing: 16) {
+                HStack {
+                    Text("Signification")
+                        .font(.headline)
+                    Spacer()
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            isPresented = nil
+                        }
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.title3)
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                ScrollView {
+                    Text(text)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .multilineTextAlignment(.leading)
+                }
+                .frame(maxHeight: 320)
+            }
+            .padding()
+            .frame(maxWidth: 520)
+            .background(.ultraThinMaterial)
+            .cornerRadius(18)
+            .shadow(color: Color.black.opacity(0.2), radius: 20, x: 0, y: 8)
+            .padding()
         }
     }
 }
@@ -769,6 +848,7 @@ private enum TransitColumnWidth {
     static let influence: CGFloat = 170
     static let meteo: CGFloat = 70
     static let signification: CGFloat = 280
+    static let totalWidth: CGFloat = pic + planet + aspect + planet + date + date + orbe + influence + meteo + signification + 108
 }
 
 struct TransitCSVDocument: FileDocument {
@@ -787,4 +867,3 @@ struct TransitCSVDocument: FileDocument {
         FileWrapper(regularFileWithContents: Data(csv.utf8))
     }
 }
-
