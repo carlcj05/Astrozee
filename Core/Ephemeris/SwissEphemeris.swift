@@ -27,75 +27,125 @@ final class Ephemeris {
             if files.first(where: { $0.lowercased().hasSuffix(".se1") }) != nil {
                 sePath.withCString { swe_set_ephe_path($0) }
                 var ver = [Int8](repeating: 0, count: 48)
-                swe_version(&ver)
-                let version = String(cString: ver)
-                status = EphemerisStatus(engine: .swisseph, seVersion: version, sePath: sePath, lastError: nil)
-                return
-            } else {
-                status = EphemerisStatus(engine: .moshier, seVersion: nil, sePath: sePath, lastError: "Aucun .se1 trouvé — utilisation de MOSEPH.")
-            }
-        } else {
-            status = EphemerisStatus(engine: .moshier, seVersion: nil, sePath: nil, lastError: "Dossier se/ introuvable — utilisation de MOSEPH.")
-        }
+                                swe_version(&ver)
+                                let version = String(cString: ver)
+                                status = EphemerisStatus(engine: .swisseph, seVersion: version, sePath: sePath, lastError: nil)
+                                return
+                            } else {
+                                status = EphemerisStatus(engine: .moshier, seVersion: nil, sePath: sePath, lastError: "Aucun .se1 trouvé — utilisation de MOSEPH.")
+                            }
+                        } else {
+                            status = EphemerisStatus(engine: .moshier, seVersion: nil, sePath: nil, lastError: "Dossier se/ introuvable — utilisation de MOSEPH.")
+                        }
 
-        // Si on arrive ici → fallback : MOSEPH (pas besoin de set_ephe_path)
-        var ver = [Int8](repeating: 0, count: 48)
-        swe_version(&ver)
-        status.seVersion = String(cString: ver)
-    }
+                        // Si on arrive ici → fallback : MOSEPH (pas besoin de set_ephe_path)
+                        var ver = [Int8](repeating: 0, count: 48)
+                        swe_version(&ver)
+                        status.seVersion = String(cString: ver)
+                    }
 
-    func computePositionsUT(dateUT: Date) -> [PlanetPosition] {
-        return SwissEphemerisProvider.shared.computePositionsUT(
-            dateUT: dateUT,
-            useMoshier: status.engine == .moshier,
-            errorOut: &status.lastError
-        )
-    }
-}
+                    func computePositionsUT(dateUT: Date) -> [PlanetPosition] {
+                        return SwissEphemerisProvider.shared.computePositionsUT(
+                            dateUT: dateUT,
+                            useMoshier: status.engine == .moshier,
+                            errorOut: &status.lastError
+                        )
+                    }
 
-// MARK: - Calculateur
-final class SwissEphemerisProvider {
-    static let shared = SwissEphemerisProvider()
-    private init() {}
+                    func computeHousesUT(dateUT: Date, latitude: Double, longitude: Double, houseSystem: Int32 = SE_HSYS_PLACIDUS) -> HouseSystemResult? {
+                        return SwissEphemerisProvider.shared.computeHousesUT(
+                            dateUT: dateUT,
+                            latitude: latitude,
+                            longitude: longitude,
+                            houseSystem: houseSystem,
+                            errorOut: &status.lastError
+                        )
+                    }
+                }
 
-    func computePositionsUT(dateUT: Date, useMoshier: Bool, errorOut: inout String?) -> [PlanetPosition] {
-        var results: [PlanetPosition] = []
+                // MARK: - Calculateur
+                final class SwissEphemerisProvider {
+                    static let shared = SwissEphemerisProvider()
+                    private init() {}
 
-        // Décomposition de la date en UTC
-        var utcCal = Calendar(identifier: .gregorian)
-        utcCal.timeZone = TimeZone(secondsFromGMT: 0)!
-        let comps = utcCal.dateComponents([.year,.month,.day,.hour,.minute,.second], from: dateUT)
-        guard let y = comps.year, let m = comps.month, let d = comps.day else { return results }
-        let hour = Double(comps.hour ?? 0) + Double(comps.minute ?? 0)/60.0 + Double(comps.second ?? 0)/3600.0
+                    func computePositionsUT(dateUT: Date, useMoshier: Bool, errorOut: inout String?) -> [PlanetPosition] {
+                        var results: [PlanetPosition] = []
 
-        // Jour julien UT
-        let tjd_ut = swe_julday(Int32(y), Int32(m), Int32(d), hour, SE_GREG_CAL)
+                        // Décomposition de la date en UTC
+                        var utcCal = Calendar(identifier: .gregorian)
+                        utcCal.timeZone = TimeZone(secondsFromGMT: 0)!
+                        let comps = utcCal.dateComponents([.year,.month,.day,.hour,.minute,.second], from: dateUT)
+                        guard let y = comps.year, let m = comps.month, let d = comps.day else { return results }
+                        let hour = Double(comps.hour ?? 0) + Double(comps.minute ?? 0)/60.0 + Double(comps.second ?? 0)/3600.0
 
-        // Flags : SWIEPH (avec fichiers) sinon MOSEPH (sans fichiers) + vitesses
-        let baseFlag: Int32 = useMoshier ? SEFLG_MOSEPH : SEFLG_SWIEPH
-        let iflag: Int32 = baseFlag | SEFLG_SPEED
+                        // Jour julien UT
+                        let tjd_ut = swe_julday(Int32(y), Int32(m), Int32(d), hour, SE_GREG_CAL)
 
-        var xx = [Double](repeating: 0, count: 6)
-        var serr = [Int8](repeating: 0, count: 256)
+                        // Flags : SWIEPH (avec fichiers) sinon MOSEPH (sans fichiers) + vitesses
+                        let baseFlag: Int32 = useMoshier ? SEFLG_MOSEPH : SEFLG_SWIEPH
+                        let iflag: Int32 = baseFlag | SEFLG_SPEED
 
-        for item in DEFAULT_PLANETS {
-            xx = [Double](repeating: 0, count: 6)
-            serr = [Int8](repeating: 0, count: 256)
-            let rc = swe_calc_ut(tjd_ut, item.id, iflag, &xx, &serr)
-            if rc < 0 {
-                errorOut = String(cString: serr)
-                continue
-            }
-            let lon = xx[0]  // longitude écliptique géocentrique (tropicale)
-            let speed = xx[3]
-            results.append(
-                PlanetPosition(id: Int(item.id),
-                               name: item.name,
-                               longitude: lon,
-                               speed: speed,
-                               sign: zodiacName(for: lon))
-            )
-        }
-        return results
-    }
-}
+                        var xx = [Double](repeating: 0, count: 6)
+                        var serr = [Int8](repeating: 0, count: 256)
+
+                        for item in DEFAULT_PLANETS {
+                            xx = [Double](repeating: 0, count: 6)
+                            serr = [Int8](repeating: 0, count: 256)
+                            let rc = swe_calc_ut(tjd_ut, item.id, iflag, &xx, &serr)
+                            if rc < 0 {
+                                errorOut = String(cString: serr)
+                                continue
+                            }
+                            let lon = xx[0]  // longitude écliptique géocentrique (tropicale)
+                            let speed = xx[3]
+                            results.append(
+                                PlanetPosition(id: Int(item.id),
+                                               name: item.name,
+                                               longitude: lon,
+                                               speed: speed,
+                                               sign: zodiacName(for: lon))
+                            )
+                        }
+                        return results
+                    }
+
+                    func computeHousesUT(
+                        dateUT: Date,
+                        latitude: Double,
+                        longitude: Double,
+                        houseSystem: Int32,
+                        errorOut: inout String?
+                    ) -> HouseSystemResult? {
+                        var utcCal = Calendar(identifier: .gregorian)
+                        utcCal.timeZone = TimeZone(secondsFromGMT: 0)!
+                        let comps = utcCal.dateComponents([.year,.month,.day,.hour,.minute,.second], from: dateUT)
+                        guard let y = comps.year, let m = comps.month, let d = comps.day else { return nil }
+                        let hour = Double(comps.hour ?? 0) + Double(comps.minute ?? 0)/60.0 + Double(comps.second ?? 0)/3600.0
+
+                        let tjd_ut = swe_julday(Int32(y), Int32(m), Int32(d), hour, SE_GREG_CAL)
+
+                        var cusp = [Double](repeating: 0, count: 13)
+                        var ascmc = [Double](repeating: 0, count: 10)
+                        let rc = swe_houses(tjd_ut, latitude, longitude, houseSystem, &cusp, &ascmc)
+                        if rc < 0 {
+                            errorOut = "Erreur Swiss Ephemeris: swe_houses"
+                            return nil
+                        }
+
+                        let cusps = (1...12).map { index in
+                            let lon = cusp[index]
+                            return HouseCusp(
+                                id: index,
+                                longitude: lon,
+                                sign: zodiacName(for: lon),
+                                degreeInSign: formatDegreeInSign(lon)
+                            )
+                        }
+
+                        return HouseSystemResult(
+                            cusps: cusps,
+                            ascendant: ascmc[0],
+                            midheaven: ascmc[1]
+                        )
+                    }
+                }

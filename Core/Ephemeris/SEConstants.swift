@@ -1,4 +1,3 @@
-
 import Foundation
 
 let SE_SUN: Int32       = 0
@@ -13,7 +12,12 @@ let SE_NEPTUNE: Int32   = 8
 let SE_PLUTO: Int32     = 9
 let SE_MEAN_NODE: Int32 = 10
 let SE_TRUE_NODE: Int32 = 11
+let SE_MEAN_APOG: Int32 = 12
 let SE_CHIRON: Int32    = 15
+let SE_CERES: Int32     = 17
+let SE_PALLAS: Int32    = 18
+let SE_JUNO: Int32      = 19
+let SE_VESTA: Int32     = 20
 
 let SEFLG_SWIEPH: Int32 = 2
 let SEFLG_SPEED: Int32  = 256
@@ -32,7 +36,12 @@ let DEFAULT_PLANETS: [(id: Int32, name: String)] = [
     (SE_NEPTUNE, "Neptune"),
     (SE_PLUTO, "Pluton"),
     (SE_TRUE_NODE, "Nœud Nord (vrai)"),
-    (SE_CHIRON, "Chiron")
+    (SE_CHIRON, "Chiron"),
+    (SE_CERES, "Cérès"),
+    (SE_PALLAS, "Pallas"),
+    (SE_JUNO, "Junon"),
+    (SE_VESTA, "Vesta"),
+    (SE_MEAN_APOG, "Lilith")
 ]
 
 let ZODIAC_SIGNS = [

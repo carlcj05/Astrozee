@@ -72,7 +72,13 @@ struct TransitProfileView: View {
     let profile: Profile
     @State private var natalPositions: [PlanetPosition] = []
     @State private var selectedPlanet: PlanetPosition?
-    
+    @State private var houseCusps: [HouseCusp] = []
+    @State private var chartAngles: [ChartAngle] = []
+    @State private var chartPoints: [ChartPoint] = []
+    @State private var displayHouseCusps: [HouseCusp] = []
+    @State private var displayChartAngles: [ChartAngle] = []
+    @State private var displayChartPoints: [ChartPoint] = []
+
     var body: some View {
         ZStack {
             #if os(iOS)
@@ -120,11 +126,26 @@ struct TransitProfileView: View {
                             description: Text("Nous préparons le visuel astral de \(profile.name).")
                         )
                     } else {
-                        NatalChartView(positions: natalPositions, selectedPlanet: $selectedPlanet)
+                        NatalChartView(
+                            positions: natalPositions,
+                            houseCusps: houseCusps,
+                            angles: chartAngles,
+                            selectedPlanet: $selectedPlanet
+                        )
                         
                         NatalPlanetDetailCard(planet: selectedPlanet)
                         
                         NatalPlanetLegend(positions: natalPositions, selectedPlanet: $selectedPlanet)
+
+                        NatalAnglesSection(angles: displayChartAngles, points: displayChartPoints)
+
+                        NatalHousesSection(cusps: displayHouseCusps)
+
+                        if profile.latitude == nil || profile.longitude == nil {
+                            Text("Ajoute une ville pour obtenir les maisons, l'Ascendant et le Milieu du Ciel.")
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                        }
                     }
                 }
                 .padding()
@@ -140,17 +161,119 @@ struct TransitProfileView: View {
         }
         .task {
             let positions = Ephemeris.shared.computePositionsUT(dateUT: profile.birthDateUTC())
+            var cusps: [HouseCusp] = []
+            var angles: [ChartAngle] = []
+            var points: [ChartPoint] = []
+
+                if let latitude = profile.latitude, let longitude = profile.longitude,
+                   let houses = Ephemeris.shared.computeHousesUT(
+                    dateUT: profile.birthDateUTC(),
+                    latitude: latitude,
+                    longitude: longitude,
+                    houseSystem: SE_HSYS_PLACIDUS
+                   ) {
+                    cusps = houses.cusps
+                    angles = makeAngles(from: houses)
+                    points = makePoints(from: positions, ascendant: houses.ascendant)
+                }
+
             withAnimation(.easeInOut(duration: 0.4)) {
                 natalPositions = positions
                 selectedPlanet = positions.first
+                houseCusps = cusps
+                chartAngles = angles
+                chartPoints = points
+                displayHouseCusps = cusps.isEmpty ? placeholderCusps() : cusps
+                displayChartAngles = angles.isEmpty ? placeholderAngles() : angles
+                displayChartPoints = points.isEmpty ? placeholderPoints() : points
             }
         }
+    }
+
+    private func makeAngles(from result: HouseSystemResult) -> [ChartAngle] {
+        let ascendant = normalizeAngle(result.ascendant)
+        let midheaven = normalizeAngle(result.midheaven)
+        let descendant = normalizeAngle(ascendant + 180)
+        let imumCoeli = normalizeAngle(midheaven + 180)
+
+        return [
+            ChartAngle(
+                id: "asc",
+                name: "Ascendant",
+                longitude: ascendant,
+                sign: zodiacName(for: ascendant),
+                degreeInSign: formatDegreeInSign(ascendant)
+            ),
+            ChartAngle(
+                id: "dsc",
+                name: "Descendant",
+                longitude: descendant,
+                sign: zodiacName(for: descendant),
+                degreeInSign: formatDegreeInSign(descendant)
+            ),
+            ChartAngle(
+                id: "mc",
+                name: "Milieu du Ciel",
+                longitude: midheaven,
+                sign: zodiacName(for: midheaven),
+                degreeInSign: formatDegreeInSign(midheaven)
+            ),
+            ChartAngle(
+                id: "ic",
+                name: "Fond du Ciel",
+                longitude: imumCoeli,
+                sign: zodiacName(for: imumCoeli),
+                degreeInSign: formatDegreeInSign(imumCoeli)
+            )
+        ]
+    }
+
+    private func makePoints(from positions: [PlanetPosition], ascendant: Double) -> [ChartPoint] {
+        guard let sun = positions.first(where: { $0.name.lowercased() == "soleil" })?.longitude,
+              let moon = positions.first(where: { $0.name.lowercased() == "lune" })?.longitude else {
+            return []
+        }
+
+        let fortune = normalizeAngle(ascendant + moon - sun)
+
+        return [
+            ChartPoint(
+                id: "fortune",
+                name: "Part de Fortune",
+                longitude: fortune,
+                sign: zodiacName(for: fortune),
+                degreeInSign: formatDegreeInSign(fortune)
+            )
+        ]
+    }
+
+    private func placeholderCusps() -> [HouseCusp] {
+        (1...12).map { index in
+            HouseCusp(id: index, longitude: 0, sign: "—", degreeInSign: "--")
+        }
+    }
+
+    private func placeholderAngles() -> [ChartAngle] {
+        [
+            ChartAngle(id: "asc", name: "Ascendant", longitude: 0, sign: "—", degreeInSign: "--"),
+            ChartAngle(id: "dsc", name: "Descendant", longitude: 0, sign: "—", degreeInSign: "--"),
+            ChartAngle(id: "mc", name: "Milieu du Ciel", longitude: 0, sign: "—", degreeInSign: "--"),
+            ChartAngle(id: "ic", name: "Fond du Ciel", longitude: 0, sign: "—", degreeInSign: "--")
+        ]
+    }
+
+    private func placeholderPoints() -> [ChartPoint] {
+        [
+            ChartPoint(id: "fortune", name: "Part de Fortune", longitude: 0, sign: "—", degreeInSign: "--")
+        ]
     }
 }
 
 // MARK: - Thème natal (visuel interactif)
 private struct NatalChartView: View {
     let positions: [PlanetPosition]
+    let houseCusps: [HouseCusp]
+    let angles: [ChartAngle]
     @Binding var selectedPlanet: PlanetPosition?
     
     var body: some View {
@@ -213,6 +336,29 @@ private struct NatalChartView: View {
                         .font(.system(size: size * 0.06, weight: .semibold))
                         .foregroundStyle(Color.indigo.opacity(0.7))
                         .position(point(on: angle, radius: chartRadius * 0.78, center: center))
+                }
+
+                ForEach(houseCusps) { cusp in
+                    let angle = cusp.longitude - 90.0
+                    let lineStart = point(on: angle, radius: chartRadius * 0.28, center: center)
+                    let lineEnd = point(on: angle, radius: chartRadius * 0.98, center: center)
+
+                    Path { path in
+                        path.move(to: lineStart)
+                        path.addLine(to: lineEnd)
+                    }
+                    .stroke(Color.purple.opacity(0.18), lineWidth: 1)
+                }
+
+                ForEach(angles) { angle in
+                    let label = angleSymbol(for: angle)
+                    let point = point(on: angle.longitude - 90.0, radius: chartRadius * 0.92, center: center)
+                    Text(label)
+                        .font(.system(size: size * 0.035, weight: .semibold))
+                        .foregroundStyle(Color.purple.opacity(0.8))
+                        .padding(4)
+                        .background(Color.white.opacity(0.9), in: Capsule())
+                        .position(point)
                 }
                 
                 ForEach(layoutPlanets(positions: positions, baseRadius: chartRadius * 0.64)) { layout in
@@ -280,6 +426,11 @@ private struct NatalChartView: View {
         case "pluton": return "♇"
         case "nœud nord (vrai)", "noeud nord (vrai)": return "☊"
         case "chiron": return "⚷"
+        case "cérès", "ceres": return "⚳"
+        case "pallas": return "⚴"
+        case "junon", "juno": return "⚵"
+        case "vesta": return "⚶"
+        case "lilith": return "⚸"
         default: return "✦"
         }
     }
@@ -296,6 +447,12 @@ private struct NatalChartView: View {
         case "uranus": return Color.cyan.opacity(0.7)
         case "neptune": return Color.blue.opacity(0.7)
         case "pluton": return Color.purple.opacity(0.7)
+        case "chiron": return Color.indigo.opacity(0.6)
+        case "cérès", "ceres": return Color.green.opacity(0.65)
+        case "pallas": return Color.teal.opacity(0.6)
+        case "junon", "juno": return Color.pink.opacity(0.6)
+        case "vesta": return Color.orange.opacity(0.65)
+        case "lilith": return Color.black.opacity(0.7)
         default: return Color.indigo.opacity(0.6)
         }
     }
@@ -335,6 +492,16 @@ private struct NatalChartView: View {
         if value < -180 { value += 360 }
         if value > 180 { value -= 360 }
         return abs(value)
+    }
+
+    private func angleSymbol(for angle: ChartAngle) -> String {
+        switch angle.id {
+        case "asc": return "ASC"
+        case "dsc": return "DSC"
+        case "mc": return "MC"
+        case "ic": return "IC"
+        default: return angle.name
+        }
     }
     
     private var zodiacSymbols: [String] {
@@ -404,6 +571,11 @@ private struct NatalPlanetDetailCard: View {
         case "pluton": return "♇"
         case "nœud nord (vrai)", "noeud nord (vrai)": return "☊"
         case "chiron": return "⚷"
+        case "cérès", "ceres": return "⚳"
+        case "pallas": return "⚴"
+        case "junon", "juno": return "⚵"
+        case "vesta": return "⚶"
+        case "lilith": return "⚸"
         default: return "✦"
         }
     }
@@ -460,7 +632,109 @@ private struct NatalPlanetLegend: View {
         case "pluton": return "♇"
         case "nœud nord (vrai)", "noeud nord (vrai)": return "☊"
         case "chiron": return "⚷"
+        case "cérès", "ceres": return "⚳"
+        case "pallas": return "⚴"
+        case "junon", "juno": return "⚵"
+        case "vesta": return "⚶"
+        case "lilith": return "⚸"
         default: return "✦"
+        }
+    }
+}
+
+private struct NatalAnglesSection: View {
+    let angles: [ChartAngle]
+    let points: [ChartPoint]
+
+    private let columns = [
+        GridItem(.adaptive(minimum: 140), spacing: 12, alignment: .leading)
+    ]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Angles & points")
+                .font(.headline)
+
+            LazyVGrid(columns: columns, spacing: 12) {
+                ForEach(angles) { angle in
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(angleLabel(for: angle))
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                        Text("\(angle.sign) • \(angle.degreeInSign)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(10)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.white.opacity(0.7))
+                    .cornerRadius(12)
+                }
+
+                ForEach(points) { point in
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(pointLabel(for: point))
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                        Text("\(point.sign) • \(point.degreeInSign)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(10)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.white.opacity(0.7))
+                    .cornerRadius(12)
+                }
+            }
+        }
+    }
+
+    private func angleLabel(for angle: ChartAngle) -> String {
+        switch angle.id {
+        case "asc": return "ASC • \(angle.name)"
+        case "dsc": return "DSC • \(angle.name)"
+        case "mc": return "MC • \(angle.name)"
+        case "ic": return "IC • \(angle.name)"
+        default: return angle.name
+        }
+    }
+
+    private func pointLabel(for point: ChartPoint) -> String {
+        switch point.id {
+        case "fortune": return "⊗ \(point.name)"
+        default: return point.name
+        }
+    }
+}
+
+private struct NatalHousesSection: View {
+    let cusps: [HouseCusp]
+
+    private let columns = [
+        GridItem(.adaptive(minimum: 120), spacing: 12, alignment: .leading)
+    ]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Maisons")
+                .font(.headline)
+
+            LazyVGrid(columns: columns, spacing: 12) {
+                ForEach(cusps) { cusp in
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Maison \(cusp.id)")
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                        Text("\(cusp.sign) • \(cusp.degreeInSign)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(10)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.white.opacity(0.7))
+                    .cornerRadius(12)
+                }
+            }
         }
     }
 }
@@ -702,3 +976,4 @@ struct TransitCSVDocument: FileDocument {
         FileWrapper(regularFileWithContents: Data(csv.utf8))
     }
 }
+
