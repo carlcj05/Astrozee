@@ -56,6 +56,21 @@ func zodiacName(for eclipticLongitude: Double) -> String {
     return ZODIAC_SIGNS[max(0, min(11, index))]
 }
 
+func formatDegreeInSign(_ eclipticLongitude: Double) -> String {
+    var lon = eclipticLongitude.truncatingRemainder(dividingBy: 360.0)
+    if lon < 0 { lon += 360.0 }
+    let signDegrees = lon.truncatingRemainder(dividingBy: 30.0)
+    let degree = Int(floor(signDegrees))
+    let minutes = Int(floor((signDegrees - Double(degree)) * 60.0))
+    return String(format: "%02d°%02d′", degree, minutes)
+}
+
+func normalizeAngle(_ angle: Double) -> Double {
+    var normalized = angle.truncatingRemainder(dividingBy: 360.0)
+    if normalized < 0 { normalized += 360.0 }
+    return normalized
+}
+
 // --- SEConstants.swift --- (Ajoute ça à la fin)
 
 // Codes pour les systèmes de maisons (House Systems)
