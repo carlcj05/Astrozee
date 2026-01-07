@@ -35,7 +35,6 @@
 		307F64012E6885E300645245 /* swemmoon.c in Sources */ = {isa = PBXBuildFile; fileRef = 307F63F82E6885E300645245 /* swemmoon.c */; };
 		307F64032E6885E300645245 /* swehel.c in Sources */ = {isa = PBXBuildFile; fileRef = 307F63F42E6885E300645245 /* swehel.c */; };
 		307F64072E6885E300645245 /* swemplan.c in Sources */ = {isa = PBXBuildFile; fileRef = 307F63F92E6885E300645245 /* swemplan.c */; };
-		30816C1D2F0EAE03004A49D2 /* AstroFormatting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30816C1C2F0EADFA004A49D2 /* AstroFormatting.swift */; };
 		30816C202F0EAE44004A49D2 /* HousePosition.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30816C1F2F0EAE41004A49D2 /* HousePosition.swift */; };
 		30E4878E2F0D106A00E3CB34 /* InterpretationModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30E4878D2F0D106200E3CB34 /* InterpretationModel.swift */; };
 		30E487902F0D109900E3CB34 /* AstrologyEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30E4878F2F0D109200E3CB34 /* AstrologyEngine.swift */; };
@@ -108,7 +107,6 @@
 		307F640F2E68867C00645245 /* sweephe4.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = sweephe4.h; sourceTree = "<group>"; };
 		307F64122E68867C00645245 /* swemptab.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = swemptab.h; sourceTree = "<group>"; };
 		307F64182E68867C00645245 /* swevents.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = swevents.h; sourceTree = "<group>"; };
-		30816C1C2F0EADFA004A49D2 /* AstroFormatting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AstroFormatting.swift; sourceTree = "<group>"; };
 		30816C1F2F0EAE41004A49D2 /* HousePosition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HousePosition.swift; sourceTree = "<group>"; };
 		30E4878D2F0D106200E3CB34 /* InterpretationModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InterpretationModel.swift; sourceTree = "<group>"; };
 		30E4878F2F0D109200E3CB34 /* AstrologyEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AstrologyEngine.swift; sourceTree = "<group>"; };
@@ -250,7 +248,6 @@
 		307F63AB2E68371400645245 /* Core */ = {
 			isa = PBXGroup;
 			children = (
-				30816C1C2F0EADFA004A49D2 /* AstroFormatting.swift */,
 				30E487992F0D217000E3CB34 /* Aspects.swift */,
 				30E487972F0D201900E3CB34 /* TransitService.swift */,
 				30E487912F0D10B600E3CB34 /* TransitView.swift */,
@@ -523,7 +520,6 @@
 				30E4879A2F0D217200E3CB34 /* Aspects.swift in Sources */,
 				30217F802E69CF1F00800987 /* PlanetPosition.swift in Sources */,
 				307F64032E6885E300645245 /* swehel.c in Sources */,
-				30816C1D2F0EAE03004A49D2 /* AstroFormatting.swift in Sources */,
 				307F64072E6885E300645245 /* swemplan.c in Sources */,
 				30E4878E2F0D106A00E3CB34 /* InterpretationModel.swift in Sources */,
 				30217F792E69CEF100800987 /* PlanetPositionsView.swift in Sources */,
