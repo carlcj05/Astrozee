@@ -1219,3 +1219,4 @@ struct TransitCSVDocument: FileDocument {
         FileWrapper(regularFileWithContents: Data(csv.utf8))
     }
 }
+

@@ -80,17 +80,16 @@ struct TransitMoodChartView: View {
     }
 
     private var chartSection: some View {
-        Chart {
-            ForEach(moodWeekData) { item in
-                BarMark(
-                    x: .value("Semaine", item.weekKey.id),
-                    y: .value("Score", item.value)
-                )
-                .foregroundStyle(by: .value("Catégorie", item.category.displayName))
-                .position(by: .value("Catégorie", item.category.displayName))
-                .cornerRadius(4)
-            }
-        }
+                    Chart {
+                        ForEach(moodWeekData) { item in
+                            BarMark(
+                                x: .value("Semaine", item.weekKey.id),
+                                y: .value("Score", item.value)
+                            )
+                            .foregroundStyle(by: .value("Catégorie", item.category.displayName))
+                            .cornerRadius(4)
+                        }
+                    }
         .chartForegroundStyleScale(
             domain: MoodCategory.allCases.map(\.displayName),
             range: MoodCategory.allCases.map(\.color)
@@ -236,20 +235,18 @@ struct TransitMoodChartView: View {
     }
 
     private var filteredTransits: [Transit] {
-        guard !activeThemeFilters.isEmpty else { return viewModel.transits }
-        return viewModel.transits.filter { transit in
+        let monthFiltered = viewModel.transits.filter { transit in
+            isInSelectedMonth(transit.picDate)
+        }
+        guard !activeThemeFilters.isEmpty else { return monthFiltered }
+        return monthFiltered.filter { transit in
             let themes = themeCategories(for: transit)
             return !themes.isDisjoint(with: activeThemeFilters)
         }
     }
 
     private var moodWeekKeys: [MoodWeekKey] {
-        let calendar = Calendar(identifier: .iso8601)
-        let keys = filteredTransits.map { transit -> MoodWeekKey in
-            let week = calendar.component(.weekOfYear, from: transit.picDate)
-            let year = calendar.component(.yearForWeekOfYear, from: transit.picDate)
-            return MoodWeekKey(year: year, week: week)
-        }
+        let keys = filteredTransits.map { weekKey(for: $0) }
         return Array(Set(keys)).sorted()
     }
 
@@ -285,9 +282,9 @@ struct TransitMoodChartView: View {
 
     private func weekKey(for transit: Transit) -> MoodWeekKey {
         let calendar = Calendar(identifier: .iso8601)
-        let week = calendar.component(.weekOfYear, from: transit.picDate)
-        let year = calendar.component(.yearForWeekOfYear, from: transit.picDate)
-        return MoodWeekKey(year: year, week: week)
+        let weekOfMonth = calendar.component(.weekOfMonth, from: transit.picDate)
+        let clampedWeek = min(max(weekOfMonth, 1), 4)
+        return MoodWeekKey(weekIndex: clampedWeek)
     }
 
     private func moodCategory(for transit: Transit) -> MoodCategory {
@@ -339,25 +336,29 @@ struct TransitMoodChartView: View {
             .trimmingCharacters(in: .whitespaces)
             .folding(options: .diacriticInsensitive, locale: .current)
     }
+
+    private func isInSelectedMonth(_ date: Date) -> Bool {
+        let calendar = Calendar.current
+        let selectedComponents = calendar.dateComponents([.year, .month], from: viewModel.selectedDate)
+        let dateComponents = calendar.dateComponents([.year, .month], from: date)
+        return selectedComponents.year == dateComponents.year
+            && selectedComponents.month == dateComponents.month
+    }
 }
 
 private struct MoodWeekKey: Hashable, Comparable, Identifiable {
-    let year: Int
-    let week: Int
+    let weekIndex: Int
 
     var id: String {
-        "\(year)-\(week)"
+        "S\(weekIndex)"
     }
 
     var label: String {
-        "S\(week)"
+        "S\(weekIndex)"
     }
 
     static func < (lhs: MoodWeekKey, rhs: MoodWeekKey) -> Bool {
-        if lhs.year == rhs.year {
-            return lhs.week < rhs.week
-        }
-        return lhs.year < rhs.year
+        lhs.weekIndex < rhs.weekIndex
     }
 }
 
