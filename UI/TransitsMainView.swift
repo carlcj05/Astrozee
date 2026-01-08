@@ -435,6 +435,8 @@ struct TransitResultsView: View {
     @State private var sortColumn: TransitSortColumn = .pic
     @State private var sortAscending = true
     @State private var activeFilters: [TransitSortColumn: Set<String>] = [:]
+    @State private var activeFilterColumn: TransitSortColumn?
+    @State private var pendingFilterSelections: Set<String> = []
     
     var body: some View {
         VStack {
@@ -489,9 +491,12 @@ struct TransitResultsView: View {
                                                 sortAscending: sortAscending,
                                                 onSort: toggleSort,
                                                 activeFilters: $activeFilters,
+                                                activeFilterColumn: $activeFilterColumn,
+                                                pendingSelections: $pendingFilterSelections,
                                                 filterOptions: filterOptions,
-                                                onToggleFilter: toggleFilter,
-                                                onClearFilter: clearFilter
+                                                onOpenFilter: openFilter,
+                                                onApplyFilter: applyFilter,
+                                                onCancelFilter: cancelFilter
                                             )
                                             ForEach(section.transits) { transit in
                                                 TransitTableRow(
@@ -763,18 +768,19 @@ struct TransitResultsView: View {
         }
     }
 
-    private func toggleFilter(column: TransitSortColumn, value: String) {
-        var selections = activeFilters[column] ?? []
-        if selections.contains(value) {
-            selections.remove(value)
-        } else {
-            selections.insert(value)
-        }
-        activeFilters[column] = selections
+    private func openFilter(_ column: TransitSortColumn) {
+        pendingFilterSelections = activeFilters[column] ?? []
+        activeFilterColumn = column
     }
 
-    private func clearFilter(column: TransitSortColumn) {
-        activeFilters[column] = []
+    private func applyFilter() {
+        guard let column = activeFilterColumn else { return }
+        activeFilters[column] = pendingFilterSelections
+        activeFilterColumn = nil
+    }
+
+    private func cancelFilter() {
+        activeFilterColumn = nil
     }
 
     private func uniqueSortedStrings(_ values: [String]) -> [String] {
@@ -893,9 +899,12 @@ private struct TransitTableHeader: View {
     let sortAscending: Bool
     let onSort: (TransitSortColumn) -> Void
     @Binding var activeFilters: [TransitSortColumn: Set<String>]
+    @Binding var activeFilterColumn: TransitSortColumn?
+    @Binding var pendingSelections: Set<String>
     let filterOptions: (TransitSortColumn) -> [String]
-    let onToggleFilter: (TransitSortColumn, String) -> Void
-    let onClearFilter: (TransitSortColumn) -> Void
+    let onOpenFilter: (TransitSortColumn) -> Void
+    let onApplyFilter: () -> Void
+    let onCancelFilter: () -> Void
 
     var body: some View {
         GridRow {
@@ -931,37 +940,95 @@ private struct TransitTableHeader: View {
             }
             .buttonStyle(.plain)
 
-            Menu {
-                Button("Tout afficher") {
-                    onClearFilter(column)
-                }
-                let options = filterOptions(column)
-                if options.isEmpty {
-                    Text("Aucun filtre")
-                } else {
-                    ForEach(options, id: \.self) { option in
-                        Button {
-                            onToggleFilter(column, option)
-                        } label: {
-                            HStack {
-                                Text(option)
-                                if activeFilters[column]?.contains(option) == true {
-                                    Image(systemName: "checkmark")
-                                }
-                            }
-                        }
-                    }
-                }
+            Button {
+                onOpenFilter(column)
             } label: {
                 Image(systemName: activeFilters[column]?.isEmpty == false
                       ? "line.3.horizontal.decrease.circle.fill"
                       : "line.3.horizontal.decrease.circle")
                     .font(.caption2)
             }
-            #if os(iOS)
-            .menuActionDismissBehavior(.disabled)
-            #endif
             .buttonStyle(.plain)
+            .popover(isPresented: Binding(
+                get: { activeFilterColumn == column },
+                set: { isPresented in
+                    if !isPresented {
+                        onCancelFilter()
+                    }
+                }
+            )) {
+                FilterSelectionView(
+                    title: text,
+                    options: filterOptions(column),
+                    selections: $pendingSelections,
+                    onApply: onApplyFilter,
+                    onCancel: onCancelFilter
+                )
+            }
+        }
+    }
+}
+
+private struct FilterSelectionView: View {
+    let title: String
+    let options: [String]
+    @Binding var selections: Set<String>
+    let onApply: () -> Void
+    let onCancel: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Filtrer \(title.lowercased())")
+                .font(.headline)
+            Divider()
+            if options.isEmpty {
+                Text("Aucun filtre")
+                    .foregroundStyle(.secondary)
+            } else {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 10) {
+                        ForEach(options, id: \.self) { option in
+                            Button {
+                                toggle(option)
+                            } label: {
+                                HStack(spacing: 8) {
+                                    Image(systemName: selections.contains(option) ? "checkmark.square" : "square")
+                                    Text(option)
+                                        .foregroundStyle(.primary)
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+                .frame(maxHeight: 240)
+            }
+            Divider()
+            HStack {
+                Button("Tout afficher") {
+                    selections.removeAll()
+                    onApply()
+                }
+                Spacer()
+                Button("Annuler") {
+                    onCancel()
+                }
+                Button("Valider") {
+                    onApply()
+                }
+                .buttonStyle(.borderedProminent)
+            }
+        }
+        .padding()
+        .frame(width: 260)
+    }
+
+    private func toggle(_ option: String) {
+        if selections.contains(option) {
+            selections.remove(option)
+        } else {
+            selections.insert(option)
         }
     }
 }
