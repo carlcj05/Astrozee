@@ -13,6 +13,8 @@ struct NatalChartView: View {
             let radius = size / 2
             let center = CGPoint(x: proxy.size.width / 2, y: proxy.size.height / 2)
             let chartRadius = radius * 0.84
+            let aspectRadius = chartRadius * 0.55
+            let houseRingRadius = chartRadius * 0.9
             
             ZStack {
                 Circle()
@@ -37,6 +39,10 @@ struct NatalChartView: View {
                     .stroke(Color.indigo.opacity(0.12), style: StrokeStyle(lineWidth: 1, dash: [4, 6]))
                     .frame(width: chartRadius * 2, height: chartRadius * 2)
                     .padding(chartRadius * 0.18)
+
+                Circle()
+                    .stroke(Color.indigo.opacity(0.2), lineWidth: 1)
+                    .frame(width: houseRingRadius * 2, height: houseRingRadius * 2)
                 
                 ForEach(0..<360, id: \.self) { degree in
                     let isMajor = degree % 10 == 0
@@ -69,16 +75,30 @@ struct NatalChartView: View {
                         .position(point(on: angle, radius: chartRadius * 0.78, center: center))
                 }
 
-                ForEach(houseCusps) { cusp in
-                    let angle = cusp.longitude - 90.0
-                    let lineStart = point(on: angle, radius: chartRadius * 0.28, center: center)
+                ForEach(houseLines, id: \.index) { house in
+                    let angle = house.angle - 90.0
+                    let lineStart = point(on: angle, radius: chartRadius * 0.32, center: center)
                     let lineEnd = point(on: angle, radius: chartRadius * 0.98, center: center)
 
                     Path { path in
                         path.move(to: lineStart)
                         path.addLine(to: lineEnd)
                     }
-                    .stroke(Color.purple.opacity(0.18), lineWidth: 1)
+                    .stroke(Color.purple.opacity(0.25), lineWidth: 1.2)
+
+                    let labelPoint = point(on: house.midAngle - 90.0, radius: chartRadius * 0.46, center: center)
+                    Text("\(house.index)")
+                        .font(.system(size: size * 0.03, weight: .semibold))
+                        .foregroundStyle(Color.purple.opacity(0.75))
+                        .position(labelPoint)
+                }
+
+                ForEach(aspects) { aspect in
+                    Path { path in
+                        path.move(to: point(on: aspect.startAngle - 90.0, radius: aspectRadius, center: center))
+                        path.addLine(to: point(on: aspect.endAngle - 90.0, radius: aspectRadius, center: center))
+                    }
+                    .stroke(aspect.color.opacity(0.6), lineWidth: 1)
                 }
 
                 ForEach(angles) { angle in
@@ -92,10 +112,17 @@ struct NatalChartView: View {
                         .position(point)
                 }
                 
-                ForEach(layoutPlanets(positions: positions, baseRadius: chartRadius * 0.64)) { layout in
+                ForEach(layoutPlanets(positions: positions, baseRadius: chartRadius * 0.62)) { layout in
                     let planet = layout.planet
                     let planetPoint = point(on: layout.angle, radius: layout.radius, center: center)
                     let isSelected = planet.id == selectedPlanet?.id
+
+                    Path { path in
+                        let basePoint = point(on: layout.angle, radius: chartRadius * 0.56, center: center)
+                        path.move(to: basePoint)
+                        path.addLine(to: planetPoint)
+                    }
+                    .stroke(Color.indigo.opacity(0.35), lineWidth: 0.8)
                     
                     Button {
                         withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
@@ -196,13 +223,13 @@ struct NatalChartView: View {
         
         for planet in sorted {
             let angle = planet.longitude - 90.0
-            if let lastAngle, abs(normalize(angle - lastAngle)) < 8 {
+            if let lastAngle, abs(normalize(angle - lastAngle)) < 7 {
                 stackIndex += 1
             } else {
                 stackIndex = 0
             }
             
-            let radialOffset = CGFloat(stackIndex) * 14.0
+            let radialOffset = CGFloat(stackIndex) * 16.0
             let radius = baseRadius + radialOffset
             layouts.append(
                 PlanetLayout(
@@ -225,6 +252,63 @@ struct NatalChartView: View {
         return abs(value)
     }
 
+    private var aspects: [NatalAspect] {
+        let planets = positions
+        var results: [NatalAspect] = []
+        for i in 0..<planets.count {
+            for j in (i + 1)..<planets.count {
+                let first = planets[i]
+                let second = planets[j]
+                let distance = AspectCalculator.shortestDistance(first.longitude, second.longitude)
+                for aspect in AspectType.allCases {
+                    if abs(distance - aspect.angle) <= aspect.orbe {
+                        results.append(
+                            NatalAspect(
+                                id: "\(first.id)-\(second.id)-\(aspect.rawValue)",
+                                startAngle: first.longitude,
+                                endAngle: second.longitude,
+                                color: colorForAspect(aspect)
+                            )
+                        )
+                        break
+                    }
+                }
+            }
+        }
+        return results
+    }
+
+    private var houseLines: [HouseLine] {
+        let cusps = houseCusps.sorted { $0.id < $1.id }
+        guard cusps.count == 12 else {
+            return (1...12).map { index in
+                let angle = Double(index - 1) * 30.0
+                let midAngle = angle + 15.0
+                return HouseLine(index: index, angle: angle, midAngle: midAngle)
+            }
+        }
+
+        return cusps.enumerated().map { (offset, cusp) in
+            let next = cusps[(offset + 1) % cusps.count]
+            let start = normalizeAngle(cusp.longitude)
+            let end = normalizeAngle(next.longitude)
+            let mid = midpointAngle(start: start, end: end)
+            return HouseLine(index: offset + 1, angle: start, midAngle: mid)
+        }
+    }
+
+    private func midpointAngle(start: Double, end: Double) -> Double {
+        let normalizedStart = normalizeAngle(start)
+        let normalizedEnd = normalizeAngle(end)
+        let delta = normalizedEnd >= normalizedStart ? normalizedEnd - normalizedStart : (normalizedEnd + 360 - normalizedStart)
+        return normalizeAngle(normalizedStart + delta / 2)
+    }
+
+    private func normalizeAngle(_ angle: Double) -> Double {
+        let value = angle.truncatingRemainder(dividingBy: 360)
+        return value < 0 ? value + 360 : value
+    }
+    
     private func angleSymbol(for angle: ChartAngle) -> String {
         switch angle.id {
         case "asc": return "ASC"
@@ -238,6 +322,17 @@ struct NatalChartView: View {
     private var zodiacSymbols: [String] {
         ["♈︎", "♉︎", "♊︎", "♋︎", "♌︎", "♍︎", "♎︎", "♏︎", "♐︎", "♑︎", "♒︎", "♓︎"]
     }
+
+    private func colorForAspect(_ aspect: AspectType) -> Color {
+        switch aspect {
+        case .conjonction:
+            return .purple
+        case .sextile, .trigone:
+            return .blue
+        case .carre, .opposition:
+            return .red
+        }
+    }
 }
 
 private struct PlanetLayout: Identifiable {
@@ -245,6 +340,20 @@ private struct PlanetLayout: Identifiable {
     let planet: PlanetPosition
     let angle: Double
     let radius: CGFloat
+}
+
+private struct NatalAspect: Identifiable {
+    let id: String
+    let startAngle: Double
+    let endAngle: Double
+    let color: Color
+}
+
+private struct HouseLine: Identifiable {
+    let id = UUID()
+    let index: Int
+    let angle: Double
+    let midAngle: Double
 }
 
 struct NatalPlanetDetailCard: View {
@@ -569,4 +678,3 @@ struct NatalHousesSection: View {
 //
 //  Created by Carl  Ozee on 07/01/2026.
 //
-
