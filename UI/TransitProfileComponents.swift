@@ -39,9 +39,9 @@ struct NatalChartView: View {
                     let isHouseMarker = degree % 30 == 0
                     let isMajor = degree % 10 == 0
                     let isMinor = degree % 5 == 0
-                    let lineLength: CGFloat
-                    let lineWidth: CGFloat
-                    let lineOpacity: Double
+                    var lineLength: CGFloat = chartRadius * 0.04
+                    var lineWidth: CGFloat = 0.6
+                    var lineOpacity: Double = 0.35
                     
                     if isHouseMarker {
                         lineLength = chartRadius * 0.18
@@ -55,10 +55,6 @@ struct NatalChartView: View {
                         lineLength = chartRadius * 0.08
                         lineWidth = 1.0
                         lineOpacity = 0.55
-                    } else {
-                        lineLength = chartRadius * 0.04
-                        lineWidth = 0.6
-                        lineOpacity = 0.35
                     }
                     
                     let lineStart = point(on: Double(degree) - 90.0, radius: chartRadius - lineLength, center: center)
@@ -615,3 +611,4 @@ struct NatalHousesSection: View {
         }
     }
 }
+
