@@ -78,6 +78,7 @@ struct TransitProfileView: View {
     @State private var displayHouseCusps: [HouseCusp] = []
     @State private var displayChartAngles: [ChartAngle] = []
     @State private var displayChartPoints: [ChartPoint] = []
+    @State private var dualityResult = DualityResult(masculine: 0.5, feminine: 0.5)
 
     var body: some View {
         ZStack {
@@ -85,79 +86,81 @@ struct TransitProfileView: View {
             Color.gray.opacity(0.1).ignoresSafeArea() // Fond gris clair sur iOS
             #endif
             
-            VStack(spacing: 30) {
-                
-                // Carte d'info Profil
-                VStack(spacing: 8) {
-                    Image(systemName: "person.crop.circle.fill")
-                        .font(.system(size: 60))
-                        .foregroundStyle(.indigo)
-                        .padding(.bottom, 5)
+            ScrollView {
+                VStack(spacing: 30) {
+                    // Carte d'info Profil
+                    VStack(spacing: 8) {
+                        Image(systemName: "person.crop.circle.fill")
+                            .font(.system(size: 60))
+                            .foregroundStyle(.indigo)
+                            .padding(.bottom, 5)
+                        
+                        Text("Analyse pour \(profile.name)")
+                            .font(.title2).bold()
+                        
+                        Text("Né(e) le \(profile.birthLocalDate.formatted(date: .abbreviated, time: .shortened))")
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    // FIX MAC: Fond blanc sur iOS, transparent ou adapté sur Mac
+                    .background(Color.white.opacity(0.8))
+                    .cornerRadius(15)
+                    .padding(.horizontal)
                     
-                    Text("Analyse pour \(profile.name)")
-                        .font(.title2).bold()
-                    
-                    Text("Né(e) le \(profile.birthLocalDate.formatted(date: .abbreviated, time: .shortened))")
-                        .foregroundStyle(.secondary)
-                }
-                .padding()
-                .frame(maxWidth: .infinity)
-                // FIX MAC: Fond blanc sur iOS, transparent ou adapté sur Mac
-                .background(Color.white.opacity(0.8))
-                .cornerRadius(15)
-                .padding(.horizontal)
-                
-                VStack(alignment: .leading, spacing: 16) {
-                    HStack {
-                        Text("Thème natal")
-                            .font(.headline)
-                        Spacer()
-                        if let place = profile.placeName, !place.isEmpty {
-                            Text(place)
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
+                    VStack(alignment: .leading, spacing: 16) {
+                        HStack {
+                            Text("Thème natal")
+                                .font(.headline)
+                            Spacer()
+                            if let place = profile.placeName, !place.isEmpty {
+                                Text(place)
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        
+                        if natalPositions.isEmpty {
+                            ContentUnavailableView(
+                                "Calcul en cours",
+                                systemImage: "sparkles",
+                                description: Text("Nous préparons le visuel astral de \(profile.name).")
+                            )
+                        } else {
+                            NatalChartView(
+                                positions: natalPositions,
+                                houseCusps: houseCusps,
+                                angles: chartAngles,
+                                selectedPlanet: $selectedPlanet
+                            )
+                            
+                            NatalPlanetDetailCard(planet: selectedPlanet)
+                            
+                            NatalPlanetLegend(positions: natalPositions, selectedPlanet: $selectedPlanet)
+
+                            NatalDualitySection(result: dualityResult)
+
+                            NatalAnglesSection(angles: displayChartAngles, points: displayChartPoints)
+
+                            NatalHousesSection(cusps: displayHouseCusps)
+
+                            if profile.latitude == nil || profile.longitude == nil {
+                                Text("Ajoute une ville pour obtenir les maisons, l'Ascendant et le Milieu du Ciel.")
+                                    .font(.footnote)
+                                    .foregroundStyle(.secondary)
+                            }
                         }
                     }
-                    
-                    if natalPositions.isEmpty {
-                        ContentUnavailableView(
-                            "Calcul en cours",
-                            systemImage: "sparkles",
-                            description: Text("Nous préparons le visuel astral de \(profile.name).")
-                        )
-                    } else {
-                        NatalChartView(
-                            positions: natalPositions,
-                            houseCusps: houseCusps,
-                            angles: chartAngles,
-                            selectedPlanet: $selectedPlanet
-                        )
-                        
-                        NatalPlanetDetailCard(planet: selectedPlanet)
-                        
-                        NatalPlanetLegend(positions: natalPositions, selectedPlanet: $selectedPlanet)
-
-                        NatalAnglesSection(angles: displayChartAngles, points: displayChartPoints)
-
-                        NatalHousesSection(cusps: displayHouseCusps)
-
-                        if profile.latitude == nil || profile.longitude == nil {
-                            Text("Ajoute une ville pour obtenir les maisons, l'Ascendant et le Milieu du Ciel.")
-                                .font(.footnote)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .background(.ultraThinMaterial)
+                    .cornerRadius(18)
+                    .padding(.horizontal)
+                    .shadow(color: Color.black.opacity(0.08), radius: 12, x: 0, y: 6)
                 }
-                .padding()
-                .frame(maxWidth: .infinity)
-                .background(.ultraThinMaterial)
-                .cornerRadius(18)
-                .padding(.horizontal)
-                .shadow(color: Color.black.opacity(0.08), radius: 12, x: 0, y: 6)
-                
-                Spacer()
+                .padding(.top)
+                .padding(.bottom, 24)
             }
-            .padding(.top)
         }
         .task {
             let positions = Ephemeris.shared.computePositionsUT(dateUT: profile.birthDateUTC())
@@ -186,6 +189,7 @@ struct TransitProfileView: View {
                 displayHouseCusps = cusps.isEmpty ? placeholderCusps() : cusps
                 displayChartAngles = angles.isEmpty ? placeholderAngles() : angles
                 displayChartPoints = points.isEmpty ? placeholderPoints() : points
+                dualityResult = computeDualityResult(positions: positions, cusps: cusps, angles: angles)
             }
         }
     }
@@ -267,475 +271,101 @@ struct TransitProfileView: View {
             ChartPoint(id: "fortune", name: "Part de Fortune", longitude: 0, sign: "—", degreeInSign: "--")
         ]
     }
-}
 
-// MARK: - Thème natal (visuel interactif)
-private struct NatalChartView: View {
-    let positions: [PlanetPosition]
-    let houseCusps: [HouseCusp]
-    let angles: [ChartAngle]
-    @Binding var selectedPlanet: PlanetPosition?
-    
-    var body: some View {
-        GeometryReader { proxy in
-            let size = min(proxy.size.width, proxy.size.height)
-            let radius = size / 2
-            let center = CGPoint(x: proxy.size.width / 2, y: proxy.size.height / 2)
-            let chartRadius = radius * 0.84
-            
-            ZStack {
-                Circle()
-                    .fill(
-                        RadialGradient(
-                            gradient: Gradient(colors: [
-                                Color.indigo.opacity(0.12),
-                                Color.purple.opacity(0.06),
-                                Color.white
-                            ]),
-                            center: .center,
-                            startRadius: 12,
-                            endRadius: radius
-                        )
-                    )
-                
-                Circle()
-                    .stroke(Color.indigo.opacity(0.25), lineWidth: 2)
-                    .frame(width: chartRadius * 2, height: chartRadius * 2)
-                
-                Circle()
-                    .stroke(Color.indigo.opacity(0.12), style: StrokeStyle(lineWidth: 1, dash: [4, 6]))
-                    .frame(width: chartRadius * 2, height: chartRadius * 2)
-                    .padding(chartRadius * 0.18)
-                
-                ForEach(0..<360, id: \.self) { degree in
-                    let isMajor = degree % 10 == 0
-                    let isMedium = degree % 5 == 0
-                    let lineLength = isMajor ? chartRadius * 0.12 : (isMedium ? chartRadius * 0.08 : chartRadius * 0.05)
-                    let lineStart = point(on: Double(degree) - 90.0, radius: chartRadius - lineLength, center: center)
-                    let lineEnd = point(on: Double(degree) - 90.0, radius: chartRadius, center: center)
-                    
-                    Path { path in
-                        path.move(to: lineStart)
-                        path.addLine(to: lineEnd)
-                    }
-                    .stroke(Color.indigo.opacity(isMajor ? 0.5 : 0.25), lineWidth: isMajor ? 1.2 : 0.8)
-                }
-                
-                ForEach(0..<12, id: \.self) { index in
-                    let angle = Double(index) * 30.0 - 90.0
-                    let lineStart = point(on: angle, radius: chartRadius * 0.38, center: center)
-                    let lineEnd = point(on: angle, radius: chartRadius * 0.98, center: center)
-                    
-                    Path { path in
-                        path.move(to: lineStart)
-                        path.addLine(to: lineEnd)
-                    }
-                    .stroke(Color.indigo.opacity(0.12), lineWidth: 1)
-                    
-                    Text(zodiacSymbols[index])
-                        .font(.system(size: size * 0.06, weight: .semibold))
-                        .foregroundStyle(Color.indigo.opacity(0.7))
-                        .position(point(on: angle, radius: chartRadius * 0.78, center: center))
-                }
+    private func computeDualityResult(positions: [PlanetPosition], cusps: [HouseCusp], angles: [ChartAngle]) -> DualityResult {
+        guard !positions.isEmpty else { return DualityResult(masculine: 0.5, feminine: 0.5) }
 
-                ForEach(houseCusps) { cusp in
-                    let angle = cusp.longitude - 90.0
-                    let lineStart = point(on: angle, radius: chartRadius * 0.28, center: center)
-                    let lineEnd = point(on: angle, radius: chartRadius * 0.98, center: center)
+        var masculineScore = 0.0
+        var feminineScore = 0.0
 
-                    Path { path in
-                        path.move(to: lineStart)
-                        path.addLine(to: lineEnd)
-                    }
-                    .stroke(Color.purple.opacity(0.18), lineWidth: 1)
-                }
+        let planetWeights: [String: Double] = [
+            "soleil": 3,
+            "lune": 3,
+            "mercure": 2,
+            "vénus": 2,
+            "venus": 2,
+            "mars": 2,
+            "jupiter": 1,
+            "saturne": 1,
+            "uranus": 1,
+            "neptune": 1,
+            "pluton": 1
+        ]
 
-                ForEach(angles) { angle in
-                    let label = angleSymbol(for: angle)
-                    let point = point(on: angle.longitude - 90.0, radius: chartRadius * 0.92, center: center)
-                    Text(label)
-                        .font(.system(size: size * 0.035, weight: .semibold))
-                        .foregroundStyle(Color.purple.opacity(0.8))
-                        .padding(4)
-                        .background(Color.white.opacity(0.9), in: Capsule())
-                        .position(point)
-                }
-                
-                ForEach(layoutPlanets(positions: positions, baseRadius: chartRadius * 0.64)) { layout in
-                    let planet = layout.planet
-                    let planetPoint = point(on: layout.angle, radius: layout.radius, center: center)
-                    let isSelected = planet.id == selectedPlanet?.id
-                    
-                    Button {
-                        withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
-                            selectedPlanet = planet
-                        }
-                    } label: {
-                        Text(planetSymbol(for: planet.name))
-                            .font(.system(size: size * 0.065, weight: .bold))
-                            .foregroundStyle(isSelected ? Color.white : Color.indigo.opacity(0.9))
-                            .frame(width: size * 0.095, height: size * 0.095)
-                            .background(
-                                Circle()
-                                    .fill(isSelected ? Color.indigo : planetColor(for: planet.name))
-                            )
-                            .overlay(
-                                Circle()
-                                    .stroke(Color.white.opacity(0.75), lineWidth: isSelected ? 2 : 0.8)
-                            )
-                            .shadow(color: Color.indigo.opacity(isSelected ? 0.35 : 0.15), radius: 6, x: 0, y: 3)
-                    }
-                    .buttonStyle(.plain)
-                    .position(planetPoint)
-                }
-                
-                VStack(spacing: 4) {
-                    Text("Carte astrale")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Text("Touchez une planète")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                }
-                .position(center)
-            }
-        }
-        .aspectRatio(1, contentMode: .fit)
-        .frame(maxWidth: 360)
-        .frame(maxWidth: .infinity)
-    }
-    
-    private func point(on angleDegrees: Double, radius: CGFloat, center: CGPoint) -> CGPoint {
-        let radians = angleDegrees * .pi / 180
-        let x = center.x + cos(radians) * radius
-        let y = center.y + sin(radians) * radius
-        return CGPoint(x: x, y: y)
-    }
-    
-    private func planetSymbol(for name: String) -> String {
-        switch name.lowercased() {
-        case "soleil": return "☉"
-        case "lune": return "☾"
-        case "mercure": return "☿"
-        case "vénus", "venus": return "♀"
-        case "mars": return "♂"
-        case "jupiter": return "♃"
-        case "saturne": return "♄"
-        case "uranus": return "♅"
-        case "neptune": return "♆"
-        case "pluton": return "♇"
-        case "nœud nord (vrai)", "noeud nord (vrai)": return "☊"
-        case "chiron": return "⚷"
-        case "cérès", "ceres": return "⚳"
-        case "pallas": return "⚴"
-        case "junon", "juno": return "⚵"
-        case "vesta": return "⚶"
-        case "lilith": return "⚸"
-        default: return "✦"
-        }
-    }
-    
-    private func planetColor(for name: String) -> Color {
-        switch name.lowercased() {
-        case "soleil": return Color.orange.opacity(0.9)
-        case "lune": return Color.gray.opacity(0.6)
-        case "mercure": return Color.mint.opacity(0.7)
-        case "vénus", "venus": return Color.pink.opacity(0.7)
-        case "mars": return Color.red.opacity(0.75)
-        case "jupiter": return Color.teal.opacity(0.7)
-        case "saturne": return Color.brown.opacity(0.7)
-        case "uranus": return Color.cyan.opacity(0.7)
-        case "neptune": return Color.blue.opacity(0.7)
-        case "pluton": return Color.purple.opacity(0.7)
-        case "chiron": return Color.indigo.opacity(0.6)
-        case "cérès", "ceres": return Color.green.opacity(0.65)
-        case "pallas": return Color.teal.opacity(0.6)
-        case "junon", "juno": return Color.pink.opacity(0.6)
-        case "vesta": return Color.orange.opacity(0.65)
-        case "lilith": return Color.black.opacity(0.7)
-        default: return Color.indigo.opacity(0.6)
-        }
-    }
-    
-    private func layoutPlanets(positions: [PlanetPosition], baseRadius: CGFloat) -> [PlanetLayout] {
-        let sorted = positions.sorted { $0.longitude < $1.longitude }
-        var layouts: [PlanetLayout] = []
-        var lastAngle: Double?
-        var stackIndex = 0
-        
-        for planet in sorted {
-            let angle = planet.longitude - 90.0
-            if let lastAngle, abs(normalize(angle - lastAngle)) < 8 {
-                stackIndex += 1
+        func addPolarity(for sign: String, weight: Double) {
+            guard sign != "—" else { return }
+            if isMasculineSign(sign) {
+                masculineScore += weight
             } else {
-                stackIndex = 0
+                feminineScore += weight
             }
-            
-            let radialOffset = CGFloat(stackIndex) * 14.0
-            let radius = baseRadius + radialOffset
-            layouts.append(
-                PlanetLayout(
-                    id: planet.id,
-                    planet: planet,
-                    angle: angle,
-                    radius: radius
-                )
-            )
-            lastAngle = angle
         }
+
+        for position in positions {
+            let key = position.name.lowercased()
+            if let weight = planetWeights[key] {
+                addPolarity(for: position.sign, weight: weight)
+            }
+        }
+
+        if let ascendant = angles.first(where: { $0.id == "asc" }) {
+            addPolarity(for: ascendant.sign, weight: 3)
+        }
+
         
-        return layouts
-    }
-    
-    private func normalize(_ delta: Double) -> Double {
-        var value = delta.truncatingRemainder(dividingBy: 360)
-        if value < -180 { value += 360 }
-        if value > 180 { value -= 360 }
-        return abs(value)
+        let total = max(masculineScore + feminineScore, 1)
+        let masculine = masculineScore / total
+        let feminine = feminineScore / total
+        return DualityResult(masculine: masculine, feminine: feminine)
     }
 
-    private func angleSymbol(for angle: ChartAngle) -> String {
-        switch angle.id {
-        case "asc": return "ASC"
-        case "dsc": return "DSC"
-        case "mc": return "MC"
-        case "ic": return "IC"
-        default: return angle.name
+    private func isMasculineSign(_ sign: String) -> Bool {
+        switch sign.lowercased() {
+        case "bélier", "gémeaux", "lion", "balance", "sagittaire", "verseau":
+            return true
+        default:
+            return false
         }
     }
-    
-    private var zodiacSymbols: [String] {
-        ["♈︎", "♉︎", "♊︎", "♋︎", "♌︎", "♍︎", "♎︎", "♏︎", "♐︎", "♑︎", "♒︎", "♓︎"]
-    }
-}
 
-private struct PlanetLayout: Identifiable {
-    let id: Int
-    let planet: PlanetPosition
-    let angle: Double
-    let radius: CGFloat
-}
+    private func houseIndex(for longitude: Double, cusps: [HouseCusp]) -> Int? {
+        guard cusps.count == 12 else { return nil }
+        let sortedCusps = cusps.sorted { $0.id < $1.id }
+        let normalized = normalizeAngle(longitude)
 
-private struct NatalPlanetDetailCard: View {
-    let planet: PlanetPosition?
-    
-    var body: some View {
-        Group {
-            if let planet {
-                HStack(spacing: 12) {
-                    Text(planetSymbol(for: planet.name))
-                        .font(.system(size: 28))
-                        .frame(width: 44, height: 44)
-                        .background(Color.indigo.opacity(0.12), in: Circle())
-                    
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(planet.name)
-                            .font(.headline)
-                        Text("\(planet.sign) • \(planet.degreeInSign)")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-                    
-                    Spacer()
-                    
-                    Text("Voir")
-                        .font(.caption)
-                        .foregroundStyle(.indigo)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 6)
-                        .background(Color.indigo.opacity(0.12), in: Capsule())
+        for index in 0..<sortedCusps.count {
+            let start = normalizeAngle(sortedCusps[index].longitude)
+            let end = normalizeAngle(sortedCusps[(index + 1) % sortedCusps.count].longitude)
+
+            if start <= end {
+                if normalized >= start && normalized < end {
+                    return sortedCusps[index].id
                 }
-                .padding()
-                .frame(maxWidth: .infinity)
-                .background(Color.white.opacity(0.8))
-                .cornerRadius(14)
-            } else {
-                Text("Touchez une planète pour découvrir son influence.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+            } else if normalized >= start || normalized < end {
+                return sortedCusps[index].id
             }
         }
-    }
-    
-    private func planetSymbol(for name: String) -> String {
-        switch name.lowercased() {
-        case "soleil": return "☉"
-        case "lune": return "☾"
-        case "mercure": return "☿"
-        case "vénus", "venus": return "♀"
-        case "mars": return "♂"
-        case "jupiter": return "♃"
-        case "saturne": return "♄"
-        case "uranus": return "♅"
-        case "neptune": return "♆"
-        case "pluton": return "♇"
-        case "nœud nord (vrai)", "noeud nord (vrai)": return "☊"
-        case "chiron": return "⚷"
-        case "cérès", "ceres": return "⚳"
-        case "pallas": return "⚴"
-        case "junon", "juno": return "⚵"
-        case "vesta": return "⚶"
-        case "lilith": return "⚸"
-        default: return "✦"
-        }
-    }
-}
-
-private struct NatalPlanetLegend: View {
-    let positions: [PlanetPosition]
-    @Binding var selectedPlanet: PlanetPosition?
-    
-    private let columns = [
-        GridItem(.adaptive(minimum: 90), spacing: 12, alignment: .leading)
-    ]
-    
-    var body: some View {
-        LazyVGrid(columns: columns, spacing: 12) {
-            ForEach(positions) { planet in
-                let isSelected = planet.id == selectedPlanet?.id
-                Button {
-                    withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
-                        selectedPlanet = planet
-                    }
-                } label: {
-                    HStack(spacing: 8) {
-                        Text(planetSymbol(for: planet.name))
-                            .font(.system(size: 16))
-                            .frame(width: 24, height: 24)
-                            .background(Color.indigo.opacity(isSelected ? 0.22 : 0.1), in: Circle())
-                        Text(planet.name)
-                            .font(.caption)
-                            .foregroundStyle(.primary)
-                            .lineLimit(1)
-                    }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(isSelected ? Color.indigo.opacity(0.12) : Color.white.opacity(0.6))
-                    .cornerRadius(10)
-                }
-                .buttonStyle(.plain)
-            }
-        }
-    }
-    
-    private func planetSymbol(for name: String) -> String {
-        switch name.lowercased() {
-        case "soleil": return "☉"
-        case "lune": return "☾"
-        case "mercure": return "☿"
-        case "vénus", "venus": return "♀"
-        case "mars": return "♂"
-        case "jupiter": return "♃"
-        case "saturne": return "♄"
-        case "uranus": return "♅"
-        case "neptune": return "♆"
-        case "pluton": return "♇"
-        case "nœud nord (vrai)", "noeud nord (vrai)": return "☊"
-        case "chiron": return "⚷"
-        case "cérès", "ceres": return "⚳"
-        case "pallas": return "⚴"
-        case "junon", "juno": return "⚵"
-        case "vesta": return "⚶"
-        case "lilith": return "⚸"
-        default: return "✦"
-        }
-    }
-}
-
-private struct NatalAnglesSection: View {
-    let angles: [ChartAngle]
-    let points: [ChartPoint]
-
-    private let columns = [
-        GridItem(.adaptive(minimum: 140), spacing: 12, alignment: .leading)
-    ]
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Angles & points")
-                .font(.headline)
-
-            LazyVGrid(columns: columns, spacing: 12) {
-                ForEach(angles) { angle in
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(angleLabel(for: angle))
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                        Text("\(angle.sign) • \(angle.degreeInSign)")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    .padding(10)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.white.opacity(0.7))
-                    .cornerRadius(12)
-                }
-
-                ForEach(points) { point in
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(pointLabel(for: point))
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                        Text("\(point.sign) • \(point.degreeInSign)")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    .padding(10)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.white.opacity(0.7))
-                    .cornerRadius(12)
-                }
-            }
-        }
+        return nil
     }
 
-    private func angleLabel(for angle: ChartAngle) -> String {
-        switch angle.id {
-        case "asc": return "ASC • \(angle.name)"
-        case "dsc": return "DSC • \(angle.name)"
-        case "mc": return "MC • \(angle.name)"
-        case "ic": return "IC • \(angle.name)"
-        default: return angle.name
-        }
-    }
+    private func ascendantRuler(for sign: String, positions: [PlanetPosition]) -> PlanetPosition? {
+        let rulerMap: [String: [String]] = [
+            "bélier": ["mars"],
+            "taureau": ["vénus", "venus"],
+            "gémeaux": ["mercure"],
+            "cancer": ["lune"],
+            "lion": ["soleil"],
+            "vierge": ["mercure"],
+            "balance": ["vénus", "venus"],
+            "scorpion": ["mars", "pluton"],
+            "sagittaire": ["jupiter"],
+            "capricorne": ["saturne"],
+            "verseau": ["saturne", "uranus"],
+            "poissons": ["jupiter", "neptune"]
+        ]
 
-    private func pointLabel(for point: ChartPoint) -> String {
-        switch point.id {
-        case "fortune": return "⊗ \(point.name)"
-        default: return point.name
-        }
-    }
-}
-
-private struct NatalHousesSection: View {
-    let cusps: [HouseCusp]
-
-    private let columns = [
-        GridItem(.adaptive(minimum: 120), spacing: 12, alignment: .leading)
-    ]
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Maisons")
-                .font(.headline)
-
-            LazyVGrid(columns: columns, spacing: 12) {
-                ForEach(cusps) { cusp in
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Maison \(cusp.id)")
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                        Text("\(cusp.sign) • \(cusp.degreeInSign)")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    .padding(10)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.white.opacity(0.7))
-                    .cornerRadius(12)
-                }
-            }
-        }
+        let candidates = rulerMap[sign.lowercased()] ?? []
+        return positions.first(where: { candidates.contains($0.name.lowercased()) })
     }
 }
 
@@ -801,6 +431,12 @@ struct TransitDateSelectionView: View {
 struct TransitResultsView: View {
     @ObservedObject var viewModel: TransitViewModel
     @State private var isExportingCSV = false
+    @State private var selectedSignification: String?
+    @State private var sortColumn: TransitSortColumn = .pic
+    @State private var sortAscending = true
+    @State private var activeFilters: [TransitSortColumn: Set<String>] = [:]
+    @State private var activeFilterColumn: TransitSortColumn?
+    @State private var pendingFilterSelections: Set<String> = []
     
     var body: some View {
         VStack {
@@ -836,20 +472,53 @@ struct TransitResultsView: View {
                     }
                     .padding(.horizontal)
                     
-                    List {
-                        Section(header: Text("Analyse de \(monthTitle)")) {
-                            ForEach(viewModel.transits) { transit in
-                                TransitRow(transit: transit) // Utilise ta ligne existante
+                    ScrollView(.horizontal) {
+                        ScrollView(.vertical) {
+                            LazyVStack(alignment: .leading, spacing: 16) {
+                                Text("Analyse de \(monthTitle)")
+                                    .font(.headline)
+                                    .padding(.horizontal, 8)
+                                
+                                ForEach(groupedTransits, id: \.group) { section in
+                                    VStack(alignment: .leading, spacing: 8) {
+                                        Text(section.group.title)
+                                            .font(.subheadline.weight(.semibold))
+                                            .foregroundStyle(.secondary)
+                                        
+                                        Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 8) {
+                                            TransitTableHeader(
+                                                sortColumn: sortColumn,
+                                                sortAscending: sortAscending,
+                                                onSort: toggleSort,
+                                                activeFilters: $activeFilters,
+                                                activeFilterColumn: $activeFilterColumn,
+                                                pendingSelections: $pendingFilterSelections,
+                                                filterOptions: filterOptions,
+                                                onOpenFilter: openFilter,
+                                                onApplyFilter: applyFilter,
+                                                onCancelFilter: cancelFilter
+                                            )
+                                            ForEach(section.transits) { transit in
+                                                TransitTableRow(
+                                                    transit: transit,
+                                                    referenceDate: viewModel.selectedDate,
+                                                    selectedSignification: $selectedSignification
+                                                )
+                                            }
+                                        }
+                                    }
+                                    .padding()
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .background(.ultraThinMaterial)
+                                    .cornerRadius(16)
+                                }
                             }
+                            .frame(minWidth: TransitColumnWidth.totalWidth, alignment: .leading)
+                            .padding(.horizontal)
+                            .padding(.bottom, 8)
                         }
                     }
                 }
-                // FIX MAC: Utiliser un style compatible Mac et iOS
-                #if os(macOS)
-                .listStyle(.inset)
-                #else
-                .listStyle(.insetGrouped)
-                #endif
                 .fileExporter(
                     isPresented: $isExportingCSV,
                     document: TransitCSVDocument(csv: csvContent),
@@ -858,6 +527,16 @@ struct TransitResultsView: View {
                 ) { _ in }
             }
         }
+        .overlay {
+            if let selectedSignification {
+                SignificationZoomView(
+                    text: selectedSignification,
+                    isPresented: $selectedSignification
+                )
+                .transition(.scale.combined(with: .opacity))
+            }
+        }
+        .animation(.easeInOut(duration: 0.2), value: selectedSignification)
     }
     
     private var monthTitle: String {
@@ -958,6 +637,563 @@ struct TransitResultsView: View {
         
         return "pic plus d'un mois après \(referenceMonthName) 📡"
     }
+
+    private var groupedTransits: [(group: InfluenceGroup, transits: [Transit])] {
+        let calendar = Calendar.current
+        let referenceMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: viewModel.selectedDate)) ?? viewModel.selectedDate
+        let grouped = Dictionary(grouping: filteredTransits) { transit in
+            let picMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: transit.picDate)) ?? transit.picDate
+            let delta = calendar.dateComponents([.month], from: referenceMonth, to: picMonth).month ?? 0
+            if delta == 0 {
+                return InfluenceGroup.currentMonth
+            }
+            if abs(delta) == 1 {
+                return InfluenceGroup.oneMonthOffset
+            }
+            return InfluenceGroup.moreThanOneMonth
+        }
+
+        return InfluenceGroup.allCases.compactMap { group in
+            guard let transits = grouped[group] else { return nil }
+            let sorted = sortTransits(transits)
+            return (group, sorted)
+        }
+    }
+
+    private var filteredTransits: [Transit] {
+        let active = activeFilters.filter { !$0.value.isEmpty }
+        guard !active.isEmpty else { return viewModel.transits }
+        return viewModel.transits.filter { transit in
+            for (column, values) in active {
+                let value = filterValue(for: transit, column: column)
+                if !values.contains(value) {
+                    return false
+                }
+            }
+            return true
+        }
+    }
+
+    private func toggleSort(_ column: TransitSortColumn) {
+        if sortColumn == column {
+            sortAscending.toggle()
+        } else {
+            sortColumn = column
+            sortAscending = true
+        }
+    }
+
+    private func sortTransits(_ transits: [Transit]) -> [Transit] {
+        transits.sorted { lhs, rhs in
+            let comparison = sortComparison(lhs, rhs)
+            if comparison == .orderedSame {
+                return lhs.picDate < rhs.picDate
+            }
+            return sortAscending ? (comparison == .orderedAscending) : (comparison == .orderedDescending)
+        }
+    }
+
+    private func sortComparison(_ lhs: Transit, _ rhs: Transit) -> ComparisonResult {
+        switch sortColumn {
+        case .pic:
+            return compare(lhs.picDate, rhs.picDate)
+        case .transitPlanet:
+            return compare(lhs.transitPlanet, rhs.transitPlanet)
+        case .aspect:
+            return compare(aspectSortIndex(for: lhs.aspect), aspectSortIndex(for: rhs.aspect))
+        case .natalPlanet:
+            return compare(lhs.natalPlanet, rhs.natalPlanet)
+        case .startDate:
+            return compare(lhs.startDate, rhs.startDate)
+        case .endDate:
+            return compare(lhs.endDate, rhs.endDate)
+        case .orbe:
+            return compare(lhs.orbe, rhs.orbe)
+        case .influence:
+            return compare(influenceText(for: lhs), influenceText(for: rhs))
+        case .meteo:
+            return compare(lhs.meteo, rhs.meteo)
+        case .signification:
+            return compare(significationPreview(for: lhs), significationPreview(for: rhs))
+        }
+    }
+
+    private func filterOptions(for column: TransitSortColumn) -> [String] {
+        switch column {
+        case .pic:
+            return sortedUniqueDates(from: viewModel.transits.map(\.picDate), formatter: picFormatter)
+        case .startDate:
+            return sortedUniqueDates(from: viewModel.transits.map(\.startDate), formatter: dateFormatter)
+        case .endDate:
+            return sortedUniqueDates(from: viewModel.transits.map(\.endDate), formatter: dateFormatter)
+        case .aspect:
+            return TransitSortColumn.aspectOrder.map { $0.displayName }
+        case .transitPlanet:
+            return uniqueSortedStrings(viewModel.transits.map(\.transitPlanet))
+        case .natalPlanet:
+            return uniqueSortedStrings(viewModel.transits.map(\.natalPlanet))
+        case .orbe:
+            return uniqueSortedStrings(viewModel.transits.map { String(format: "%.2f°", $0.orbe) })
+        case .influence:
+            return uniqueSortedStrings(viewModel.transits.map { influenceText(for: $0) })
+        case .meteo:
+            return uniqueSortedStrings(viewModel.transits.map(\.meteo))
+        case .signification:
+            return uniqueSortedStrings(viewModel.transits.map { significationPreview(for: $0) })
+        }
+    }
+
+    private func filterValue(for transit: Transit, column: TransitSortColumn) -> String {
+        switch column {
+        case .pic:
+            return picFormatter.string(from: transit.picDate)
+        case .transitPlanet:
+            return transit.transitPlanet
+        case .aspect:
+            return transit.aspect.displayName
+        case .natalPlanet:
+            return transit.natalPlanet
+        case .startDate:
+            return dateFormatter.string(from: transit.startDate)
+        case .endDate:
+            return dateFormatter.string(from: transit.endDate)
+        case .orbe:
+            return String(format: "%.2f°", transit.orbe)
+        case .influence:
+            return influenceText(for: transit)
+        case .meteo:
+            return transit.meteo
+        case .signification:
+            return significationPreview(for: transit)
+        }
+    }
+
+    private func openFilter(_ column: TransitSortColumn) {
+        pendingFilterSelections = activeFilters[column] ?? []
+        activeFilterColumn = column
+    }
+
+    private func applyFilter() {
+        guard let column = activeFilterColumn else { return }
+        activeFilters[column] = pendingFilterSelections
+        activeFilterColumn = nil
+    }
+
+    private func cancelFilter() {
+        activeFilterColumn = nil
+    }
+
+    private func uniqueSortedStrings(_ values: [String]) -> [String] {
+        Array(Set(values))
+            .sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+    }
+
+    private func sortedUniqueDates(from dates: [Date], formatter: DateFormatter) -> [String] {
+        let uniqueDates = Array(Set(dates))
+        return uniqueDates.sorted().map { formatter.string(from: $0) }
+    }
+
+    private var dateFormatter: DateFormatter {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "fr_FR")
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        return formatter
+    }
+
+    private var picFormatter: DateFormatter {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "fr_FR")
+        formatter.dateFormat = "dd MMM"
+        return formatter
+    }
+
+    private func aspectSortIndex(for aspect: AspectType) -> Int {
+        TransitSortColumn.aspectOrder.firstIndex(of: aspect) ?? 0
+    }
+
+    private func influenceText(for transit: Transit) -> String {
+        let calendar = Calendar.current
+        let picMonth = calendar.component(.month, from: transit.picDate)
+        let referenceMonth = calendar.component(.month, from: viewModel.selectedDate)
+
+        if picMonth == referenceMonth {
+            return "pic du mois"
+        }
+        if abs(picMonth - referenceMonth) == 1 {
+            return "pic 1 mois avant/après"
+        }
+        return "pic plus d'un mois après"
+    }
+
+    private func significationPreview(for transit: Transit) -> String {
+        let interpretation = InterpretationService.shared.getInterpretation(for: transit)
+        let essence = interpretation?.essence?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let influence = interpretation?.influence.trimmingCharacters(in: .whitespacesAndNewlines)
+        let motsCles = interpretation?.motsCles?.trimmingCharacters(in: .whitespacesAndNewlines)
+        return essence?.isEmpty == false ? essence! : (motsCles?.isEmpty == false ? motsCles! : (influence ?? "—"))
+    }
+
+    private func compare(_ lhs: String, _ rhs: String) -> ComparisonResult {
+        lhs.localizedCaseInsensitiveCompare(rhs)
+    }
+
+    private func compare(_ lhs: Date, _ rhs: Date) -> ComparisonResult {
+        if lhs == rhs { return .orderedSame }
+        return lhs < rhs ? .orderedAscending : .orderedDescending
+    }
+
+    private func compare(_ lhs: Double, _ rhs: Double) -> ComparisonResult {
+        if lhs == rhs { return .orderedSame }
+        return lhs < rhs ? .orderedAscending : .orderedDescending
+    }
+
+    private func compare(_ lhs: Int, _ rhs: Int) -> ComparisonResult {
+        if lhs == rhs { return .orderedSame }
+        return lhs < rhs ? .orderedAscending : .orderedDescending
+    }
+}
+
+private enum InfluenceGroup: Int, CaseIterable, Hashable, Identifiable {
+    case currentMonth
+    case oneMonthOffset
+    case moreThanOneMonth
+
+    var id: Int { rawValue }
+
+    var title: String {
+        switch self {
+        case .currentMonth:
+            return "Pic du mois"
+        case .oneMonthOffset:
+            return "Pic 1 mois avant/après"
+        case .moreThanOneMonth:
+            return "Pic plus d'un mois après"
+        }
+    }
+}
+
+private enum TransitSortColumn: Hashable {
+    case pic
+    case transitPlanet
+    case aspect
+    case natalPlanet
+    case startDate
+    case endDate
+    case orbe
+    case influence
+    case meteo
+    case signification
+
+    static let aspectOrder: [AspectType] = [
+        .conjonction,
+        .carre,
+        .opposition,
+        .trigone,
+        .sextile
+    ]
+}
+
+private struct TransitTableHeader: View {
+    let sortColumn: TransitSortColumn
+    let sortAscending: Bool
+    let onSort: (TransitSortColumn) -> Void
+    @Binding var activeFilters: [TransitSortColumn: Set<String>]
+    @Binding var activeFilterColumn: TransitSortColumn?
+    @Binding var pendingSelections: Set<String>
+    let filterOptions: (TransitSortColumn) -> [String]
+    let onOpenFilter: (TransitSortColumn) -> Void
+    let onApplyFilter: () -> Void
+    let onCancelFilter: () -> Void
+
+    var body: some View {
+        GridRow {
+            headerCell("Pic", column: .pic, width: TransitColumnWidth.pic)
+            headerCell("Planète transit", column: .transitPlanet, width: TransitColumnWidth.planet)
+            headerCell("Aspect", column: .aspect, width: TransitColumnWidth.aspect)
+            headerCell("Planète natale", column: .natalPlanet, width: TransitColumnWidth.planet)
+            headerCell("Début", column: .startDate, width: TransitColumnWidth.date)
+            headerCell("Fin", column: .endDate, width: TransitColumnWidth.date)
+            headerCell("Orbe", column: .orbe, width: TransitColumnWidth.orbe)
+            headerCell("Influence", column: .influence, width: TransitColumnWidth.influence)
+            headerCell("Météo", column: .meteo, width: TransitColumnWidth.meteo)
+            headerCell("Signification", column: .signification, width: TransitColumnWidth.signification)
+        }
+        .font(.caption.weight(.semibold))
+        .foregroundStyle(.secondary)
+    }
+
+    private func headerCell(_ text: String, column: TransitSortColumn, width: CGFloat) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Button {
+                onSort(column)
+            } label: {
+                HStack(spacing: 4) {
+                    Text(text)
+                    if sortColumn == column {
+                        Image(systemName: sortAscending ? "arrowtriangle.up.fill" : "arrowtriangle.down.fill")
+                            .font(.caption2)
+                    }
+                }
+                .frame(width: width, alignment: .leading)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+
+            Button {
+                onOpenFilter(column)
+            } label: {
+                Image(systemName: activeFilters[column]?.isEmpty == false
+                      ? "line.3.horizontal.decrease.circle.fill"
+                      : "line.3.horizontal.decrease.circle")
+                    .font(.caption2)
+            }
+            .buttonStyle(.plain)
+            .popover(isPresented: Binding(
+                get: { activeFilterColumn == column },
+                set: { isPresented in
+                    if !isPresented {
+                        onCancelFilter()
+                    }
+                }
+            )) {
+                FilterSelectionView(
+                    title: text,
+                    options: filterOptions(column),
+                    selections: $pendingSelections,
+                    onApply: onApplyFilter,
+                    onCancel: onCancelFilter
+                )
+            }
+        }
+    }
+}
+
+private struct FilterSelectionView: View {
+    let title: String
+    let options: [String]
+    @Binding var selections: Set<String>
+    let onApply: () -> Void
+    let onCancel: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Filtrer \(title.lowercased())")
+                .font(.headline)
+            Divider()
+            if options.isEmpty {
+                Text("Aucun filtre")
+                    .foregroundStyle(.secondary)
+            } else {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 10) {
+                        ForEach(options, id: \.self) { option in
+                            Button {
+                                toggle(option)
+                            } label: {
+                                HStack(spacing: 8) {
+                                    Image(systemName: selections.contains(option) ? "checkmark.square" : "square")
+                                    Text(option)
+                                        .foregroundStyle(.primary)
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+                .frame(maxHeight: 240)
+            }
+            Divider()
+            HStack {
+                Button("Tout afficher") {
+                    selections.removeAll()
+                    onApply()
+                }
+                Spacer()
+                Button("Annuler") {
+                    onCancel()
+                }
+                Button("Valider") {
+                    onApply()
+                }
+                .buttonStyle(.borderedProminent)
+            }
+        }
+        .padding()
+        .frame(width: 260)
+    }
+
+    private func toggle(_ option: String) {
+        if selections.contains(option) {
+            selections.remove(option)
+        } else {
+            selections.insert(option)
+        }
+    }
+}
+
+private struct TransitTableRow: View {
+    let transit: Transit
+    let referenceDate: Date
+    @Binding var selectedSignification: String?
+
+    private var interpretation: TransitInterpretation? {
+        InterpretationService.shared.getInterpretation(for: transit)
+    }
+
+    var body: some View {
+        GridRow {
+            cell(picText, width: TransitColumnWidth.pic)
+            cell(transit.transitPlanet.capitalized, width: TransitColumnWidth.planet)
+            aspectCell
+            cell(transit.natalPlanet.capitalized, width: TransitColumnWidth.planet)
+            cell(dateText(transit.startDate), width: TransitColumnWidth.date)
+            cell(dateText(transit.endDate), width: TransitColumnWidth.date)
+            cell(String(format: "%.2f°", transit.orbe), width: TransitColumnWidth.orbe)
+            cell(influenceText, width: TransitColumnWidth.influence)
+            cell(transit.meteo, width: TransitColumnWidth.meteo)
+            significationCell
+        }
+        Divider()
+    }
+
+    private var picText: String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "fr_FR")
+        formatter.dateFormat = "dd MMM"
+        return formatter.string(from: transit.picDate)
+    }
+
+    private func dateText(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "fr_FR")
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        return formatter.string(from: date)
+    }
+
+    private var influenceText: String {
+        let calendar = Calendar.current
+        let picMonth = calendar.component(.month, from: transit.picDate)
+        let referenceMonth = calendar.component(.month, from: referenceDate)
+
+        if picMonth == referenceMonth {
+            return "pic du mois"
+        }
+        if abs(picMonth - referenceMonth) == 1 {
+            return "pic 1 mois avant/après"
+        }
+        return "pic plus d'un mois après"
+    }
+
+    private var significationText: String {
+        let essence = interpretation?.essence?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let influence = interpretation?.influence.trimmingCharacters(in: .whitespacesAndNewlines)
+        let motsCles = interpretation?.motsCles?.trimmingCharacters(in: .whitespacesAndNewlines)
+        return essence?.isEmpty == false ? essence! : (motsCles?.isEmpty == false ? motsCles! : (influence ?? "—"))
+    }
+
+    private var aspectCell: some View {
+        Text(transit.aspect.displayName)
+            .font(.caption.weight(.semibold))
+            .padding(.vertical, 4)
+            .padding(.horizontal, 6)
+            .frame(width: TransitColumnWidth.aspect, alignment: .leading)
+            .background(colorForAspect(transit.aspect).opacity(0.12))
+            .cornerRadius(6)
+            .foregroundStyle(colorForAspect(transit.aspect))
+    }
+
+    private func cell(_ text: String, width: CGFloat) -> some View {
+        Text(text)
+            .font(.subheadline)
+            .frame(width: width, alignment: .leading)
+            .lineLimit(2)
+    }
+
+    private var significationCell: some View {
+        Text(significationText)
+            .font(.subheadline)
+            .frame(width: TransitColumnWidth.signification, alignment: .leading)
+            .lineLimit(2)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                guard significationText != "—" else { return }
+                selectedSignification = significationText
+            }
+    }
+
+    private func colorForAspect(_ aspect: AspectType) -> Color {
+        switch aspect {
+        case .carre, .opposition:
+            return .red
+        case .sextile, .trigone:
+            return .green
+        case .conjonction:
+            return .blue
+        }
+    }
+}
+
+private struct SignificationZoomView: View {
+    let text: String
+    @Binding var isPresented: String?
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.35)
+                .ignoresSafeArea()
+                .onTapGesture {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        isPresented = nil
+                    }
+                }
+
+            VStack(alignment: .leading, spacing: 16) {
+                HStack {
+                    Text("Signification")
+                        .font(.headline)
+                    Spacer()
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            isPresented = nil
+                        }
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.title3)
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                ScrollView {
+                    Text(text)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .multilineTextAlignment(.leading)
+                }
+                .frame(maxHeight: 320)
+            }
+            .padding()
+            .frame(maxWidth: 520)
+            .background(.ultraThinMaterial)
+            .cornerRadius(18)
+            .shadow(color: Color.black.opacity(0.2), radius: 20, x: 0, y: 8)
+            .padding()
+        }
+    }
+}
+
+private enum TransitColumnWidth {
+    static let pic: CGFloat = 80
+    static let planet: CGFloat = 130
+    static let aspect: CGFloat = 110
+    static let date: CGFloat = 130
+    static let orbe: CGFloat = 70
+    static let influence: CGFloat = 170
+    static let meteo: CGFloat = 70
+    static let signification: CGFloat = 280
+    static let totalWidth: CGFloat = pic + planet + aspect + planet + date + date + orbe + influence + meteo + signification + 108
 }
 
 struct TransitCSVDocument: FileDocument {
