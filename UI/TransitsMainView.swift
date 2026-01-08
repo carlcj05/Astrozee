@@ -434,6 +434,7 @@ struct TransitResultsView: View {
     @State private var selectedSignification: String?
     @State private var sortColumn: TransitSortColumn = .pic
     @State private var sortAscending = true
+    @State private var activeFilters: [TransitSortColumn: Set<String>] = [:]
     
     var body: some View {
         VStack {
@@ -486,7 +487,11 @@ struct TransitResultsView: View {
                                             TransitTableHeader(
                                                 sortColumn: sortColumn,
                                                 sortAscending: sortAscending,
-                                                onSort: toggleSort
+                                                onSort: toggleSort,
+                                                activeFilters: $activeFilters,
+                                                filterOptions: filterOptions,
+                                                onToggleFilter: toggleFilter,
+                                                onClearFilter: clearFilter
                                             )
                                             ForEach(section.transits) { transit in
                                                 TransitTableRow(
@@ -631,7 +636,7 @@ struct TransitResultsView: View {
     private var groupedTransits: [(group: InfluenceGroup, transits: [Transit])] {
         let calendar = Calendar.current
         let referenceMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: viewModel.selectedDate)) ?? viewModel.selectedDate
-        let grouped = Dictionary(grouping: viewModel.transits) { transit in
+        let grouped = Dictionary(grouping: filteredTransits) { transit in
             let picMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: transit.picDate)) ?? transit.picDate
             let delta = calendar.dateComponents([.month], from: referenceMonth, to: picMonth).month ?? 0
             if delta == 0 {
@@ -647,6 +652,20 @@ struct TransitResultsView: View {
             guard let transits = grouped[group] else { return nil }
             let sorted = sortTransits(transits)
             return (group, sorted)
+        }
+    }
+
+    private var filteredTransits: [Transit] {
+        let active = activeFilters.filter { !$0.value.isEmpty }
+        guard !active.isEmpty else { return viewModel.transits }
+        return viewModel.transits.filter { transit in
+            for (column, values) in active {
+                let value = filterValue(for: transit, column: column)
+                if !values.contains(value) {
+                    return false
+                }
+            }
+            return true
         }
     }
 
@@ -692,6 +711,95 @@ struct TransitResultsView: View {
         case .signification:
             return compare(significationPreview(for: lhs), significationPreview(for: rhs))
         }
+    }
+
+    private func filterOptions(for column: TransitSortColumn) -> [String] {
+        switch column {
+        case .pic:
+            return sortedUniqueDates(from: viewModel.transits.map(\.picDate), formatter: picFormatter)
+        case .startDate:
+            return sortedUniqueDates(from: viewModel.transits.map(\.startDate), formatter: dateFormatter)
+        case .endDate:
+            return sortedUniqueDates(from: viewModel.transits.map(\.endDate), formatter: dateFormatter)
+        case .aspect:
+            return TransitSortColumn.aspectOrder.map { $0.displayName }
+        case .transitPlanet:
+            return uniqueSortedStrings(viewModel.transits.map(\.transitPlanet))
+        case .natalPlanet:
+            return uniqueSortedStrings(viewModel.transits.map(\.natalPlanet))
+        case .orbe:
+            return uniqueSortedStrings(viewModel.transits.map { String(format: "%.2f°", $0.orbe) })
+        case .influence:
+            return uniqueSortedStrings(viewModel.transits.map { influenceText(for: $0) })
+        case .meteo:
+            return uniqueSortedStrings(viewModel.transits.map(\.meteo))
+        case .signification:
+            return uniqueSortedStrings(viewModel.transits.map { significationPreview(for: $0) })
+        }
+    }
+
+    private func filterValue(for transit: Transit, column: TransitSortColumn) -> String {
+        switch column {
+        case .pic:
+            return picFormatter.string(from: transit.picDate)
+        case .transitPlanet:
+            return transit.transitPlanet
+        case .aspect:
+            return transit.aspect.displayName
+        case .natalPlanet:
+            return transit.natalPlanet
+        case .startDate:
+            return dateFormatter.string(from: transit.startDate)
+        case .endDate:
+            return dateFormatter.string(from: transit.endDate)
+        case .orbe:
+            return String(format: "%.2f°", transit.orbe)
+        case .influence:
+            return influenceText(for: transit)
+        case .meteo:
+            return transit.meteo
+        case .signification:
+            return significationPreview(for: transit)
+        }
+    }
+
+    private func toggleFilter(column: TransitSortColumn, value: String) {
+        var selections = activeFilters[column] ?? []
+        if selections.contains(value) {
+            selections.remove(value)
+        } else {
+            selections.insert(value)
+        }
+        activeFilters[column] = selections
+    }
+
+    private func clearFilter(column: TransitSortColumn) {
+        activeFilters[column] = []
+    }
+
+    private func uniqueSortedStrings(_ values: [String]) -> [String] {
+        Array(Set(values))
+            .sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+    }
+
+    private func sortedUniqueDates(from dates: [Date], formatter: DateFormatter) -> [String] {
+        let uniqueDates = Array(Set(dates))
+        return uniqueDates.sorted().map { formatter.string(from: $0) }
+    }
+
+    private var dateFormatter: DateFormatter {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "fr_FR")
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        return formatter
+    }
+
+    private var picFormatter: DateFormatter {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "fr_FR")
+        formatter.dateFormat = "dd MMM"
+        return formatter
     }
 
     private func aspectSortIndex(for aspect: AspectType) -> Int {
@@ -784,6 +892,10 @@ private struct TransitTableHeader: View {
     let sortColumn: TransitSortColumn
     let sortAscending: Bool
     let onSort: (TransitSortColumn) -> Void
+    @Binding var activeFilters: [TransitSortColumn: Set<String>]
+    let filterOptions: (TransitSortColumn) -> [String]
+    let onToggleFilter: (TransitSortColumn, String) -> Void
+    let onClearFilter: (TransitSortColumn) -> Void
 
     var body: some View {
         GridRow {
@@ -803,20 +915,51 @@ private struct TransitTableHeader: View {
     }
 
     private func headerCell(_ text: String, column: TransitSortColumn, width: CGFloat) -> some View {
-        Button {
-            onSort(column)
-        } label: {
-            HStack(spacing: 4) {
-                Text(text)
-                if sortColumn == column {
-                    Image(systemName: sortAscending ? "arrowtriangle.up.fill" : "arrowtriangle.down.fill")
-                        .font(.caption2)
+        VStack(alignment: .leading, spacing: 4) {
+            Button {
+                onSort(column)
+            } label: {
+                HStack(spacing: 4) {
+                    Text(text)
+                    if sortColumn == column {
+                        Image(systemName: sortAscending ? "arrowtriangle.up.fill" : "arrowtriangle.down.fill")
+                            .font(.caption2)
+                    }
                 }
+                .frame(width: width, alignment: .leading)
+                .contentShape(Rectangle())
             }
-            .frame(width: width, alignment: .leading)
-            .contentShape(Rectangle())
+            .buttonStyle(.plain)
+
+            Menu {
+                Button("Tout afficher") {
+                    onClearFilter(column)
+                }
+                let options = filterOptions(column)
+                if options.isEmpty {
+                    Text("Aucun filtre")
+                } else {
+                    ForEach(options, id: \.self) { option in
+                        Button {
+                            onToggleFilter(column, option)
+                        } label: {
+                            HStack {
+                                Text(option)
+                                if activeFilters[column]?.contains(option) == true {
+                                    Image(systemName: "checkmark")
+                                }
+                            }
+                        }
+                    }
+                }
+            } label: {
+                Image(systemName: activeFilters[column]?.isEmpty == false
+                      ? "line.3.horizontal.decrease.circle.fill"
+                      : "line.3.horizontal.decrease.circle")
+                    .font(.caption2)
+            }
+            .buttonStyle(.plain)
         }
-        .buttonStyle(.plain)
     }
 }
 
