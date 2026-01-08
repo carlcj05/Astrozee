@@ -431,7 +431,7 @@ struct TransitDateSelectionView: View {
 struct TransitResultsView: View {
     @ObservedObject var viewModel: TransitViewModel
     @State private var isExportingCSV = false
-    @State private var selectedSignification: String?
+    @State private var selectedSignification: Transit?
     @State private var sortColumn: TransitSortColumn = .pic
     @State private var sortAscending = true
     @State private var activeFilters: [TransitSortColumn: Set<String>] = [:]
@@ -529,8 +529,10 @@ struct TransitResultsView: View {
         }
         .overlay {
             if let selectedSignification {
+                let interpretation = InterpretationService.shared.getInterpretation(for: selectedSignification)
                 SignificationZoomView(
-                    text: selectedSignification,
+                    transit: selectedSignification,
+                    interpretation: interpretation,
                     isPresented: $selectedSignification
                 )
                 .transition(.scale.combined(with: .opacity))
@@ -700,7 +702,7 @@ struct TransitResultsView: View {
         case .transitPlanet:
             return compare(lhs.transitPlanet, rhs.transitPlanet)
         case .aspect:
-            return compare(aspectSortIndex(for: lhs.aspect), aspectSortIndex(for: rhs.aspect))
+            return compareAspect(lhs.aspect, rhs.aspect)
         case .natalPlanet:
             return compare(lhs.natalPlanet, rhs.natalPlanet)
         case .startDate:
@@ -710,7 +712,7 @@ struct TransitResultsView: View {
         case .orbe:
             return compare(lhs.orbe, rhs.orbe)
         case .influence:
-            return compare(influenceText(for: lhs), influenceText(for: rhs))
+            return compare(influence(for: lhs), influence(for: rhs))
         case .meteo:
             return compare(lhs.meteo, rhs.meteo)
         case .signification:
@@ -718,120 +720,9 @@ struct TransitResultsView: View {
         }
     }
 
-    private func filterOptions(for column: TransitSortColumn) -> [String] {
-        switch column {
-        case .pic:
-            return sortedUniqueDates(from: viewModel.transits.map(\.picDate), formatter: picFormatter)
-        case .startDate:
-            return sortedUniqueDates(from: viewModel.transits.map(\.startDate), formatter: dateFormatter)
-        case .endDate:
-            return sortedUniqueDates(from: viewModel.transits.map(\.endDate), formatter: dateFormatter)
-        case .aspect:
-            return TransitSortColumn.aspectOrder.map { $0.displayName }
-        case .transitPlanet:
-            return uniqueSortedStrings(viewModel.transits.map(\.transitPlanet))
-        case .natalPlanet:
-            return uniqueSortedStrings(viewModel.transits.map(\.natalPlanet))
-        case .orbe:
-            return uniqueSortedStrings(viewModel.transits.map { String(format: "%.2f°", $0.orbe) })
-        case .influence:
-            return uniqueSortedStrings(viewModel.transits.map { influenceText(for: $0) })
-        case .meteo:
-            return uniqueSortedStrings(viewModel.transits.map(\.meteo))
-        case .signification:
-            return uniqueSortedStrings(viewModel.transits.map { significationPreview(for: $0) })
-        }
-    }
-
-    private func filterValue(for transit: Transit, column: TransitSortColumn) -> String {
-        switch column {
-        case .pic:
-            return picFormatter.string(from: transit.picDate)
-        case .transitPlanet:
-            return transit.transitPlanet
-        case .aspect:
-            return transit.aspect.displayName
-        case .natalPlanet:
-            return transit.natalPlanet
-        case .startDate:
-            return dateFormatter.string(from: transit.startDate)
-        case .endDate:
-            return dateFormatter.string(from: transit.endDate)
-        case .orbe:
-            return String(format: "%.2f°", transit.orbe)
-        case .influence:
-            return influenceText(for: transit)
-        case .meteo:
-            return transit.meteo
-        case .signification:
-            return significationPreview(for: transit)
-        }
-    }
-
-    private func openFilter(_ column: TransitSortColumn) {
-        pendingFilterSelections = activeFilters[column] ?? []
-        activeFilterColumn = column
-    }
-
-    private func applyFilter() {
-        guard let column = activeFilterColumn else { return }
-        activeFilters[column] = pendingFilterSelections
-        activeFilterColumn = nil
-    }
-
-    private func cancelFilter() {
-        activeFilterColumn = nil
-    }
-
-    private func uniqueSortedStrings(_ values: [String]) -> [String] {
-        Array(Set(values))
-            .sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
-    }
-
-    private func sortedUniqueDates(from dates: [Date], formatter: DateFormatter) -> [String] {
-        let uniqueDates = Array(Set(dates))
-        return uniqueDates.sorted().map { formatter.string(from: $0) }
-    }
-
-    private var dateFormatter: DateFormatter {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "fr_FR")
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .none
-        return formatter
-    }
-
-    private var picFormatter: DateFormatter {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "fr_FR")
-        formatter.dateFormat = "dd MMM"
-        return formatter
-    }
-
-    private func aspectSortIndex(for aspect: AspectType) -> Int {
-        TransitSortColumn.aspectOrder.firstIndex(of: aspect) ?? 0
-    }
-
-    private func influenceText(for transit: Transit) -> String {
-        let calendar = Calendar.current
-        let picMonth = calendar.component(.month, from: transit.picDate)
-        let referenceMonth = calendar.component(.month, from: viewModel.selectedDate)
-
-        if picMonth == referenceMonth {
-            return "pic du mois"
-        }
-        if abs(picMonth - referenceMonth) == 1 {
-            return "pic 1 mois avant/après"
-        }
-        return "pic plus d'un mois après"
-    }
-
-    private func significationPreview(for transit: Transit) -> String {
-        let interpretation = InterpretationService.shared.getInterpretation(for: transit)
-        let essence = interpretation?.essence?.trimmingCharacters(in: .whitespacesAndNewlines)
-        let influence = interpretation?.influence.trimmingCharacters(in: .whitespacesAndNewlines)
-        let motsCles = interpretation?.motsCles?.trimmingCharacters(in: .whitespacesAndNewlines)
-        return essence?.isEmpty == false ? essence! : (motsCles?.isEmpty == false ? motsCles! : (influence ?? "—"))
+    private func compare<T: Comparable>(_ lhs: T, _ rhs: T) -> ComparisonResult {
+        if lhs == rhs { return .orderedSame }
+        return lhs < rhs ? .orderedAscending : .orderedDescending
     }
 
     private func compare(_ lhs: String, _ rhs: String) -> ComparisonResult {
@@ -848,28 +739,107 @@ struct TransitResultsView: View {
         return lhs < rhs ? .orderedAscending : .orderedDescending
     }
 
-    private func compare(_ lhs: Int, _ rhs: Int) -> ComparisonResult {
-        if lhs == rhs { return .orderedSame }
-        return lhs < rhs ? .orderedAscending : .orderedDescending
-    }
-}
-
-private enum InfluenceGroup: Int, CaseIterable, Hashable, Identifiable {
-    case currentMonth
-    case oneMonthOffset
-    case moreThanOneMonth
-
-    var id: Int { rawValue }
-
-    var title: String {
-        switch self {
-        case .currentMonth:
-            return "Pic du mois"
-        case .oneMonthOffset:
-            return "Pic 1 mois avant/après"
-        case .moreThanOneMonth:
-            return "Pic plus d'un mois après"
+    private func compareAspect(_ lhs: AspectType, _ rhs: AspectType) -> ComparisonResult {
+        let order = TransitSortColumn.aspectOrder
+        guard let lhsIndex = order.firstIndex(of: lhs), let rhsIndex = order.firstIndex(of: rhs) else {
+            return .orderedSame
         }
+        return compare(lhsIndex, rhsIndex)
+    }
+
+    private func filterOptions(for column: TransitSortColumn) -> [String] {
+        switch column {
+        case .pic:
+            return viewModel.transits.map { picText(for: $0.picDate) }
+        case .transitPlanet:
+            return uniqueSortedStrings(viewModel.transits.map { $0.transitPlanet.capitalized })
+        case .aspect:
+            return uniqueSortedStrings(viewModel.transits.map { $0.aspect.displayName })
+        case .natalPlanet:
+            return uniqueSortedStrings(viewModel.transits.map { $0.natalPlanet.capitalized })
+        case .startDate:
+            return viewModel.transits.map { dateText($0.startDate) }
+        case .endDate:
+            return viewModel.transits.map { dateText($0.endDate) }
+        case .orbe:
+            return viewModel.transits.map { String(format: "%.2f°", $0.orbe) }
+        case .influence:
+            return uniqueSortedStrings(viewModel.transits.map { influence(for: $0) })
+        case .meteo:
+            return uniqueSortedStrings(viewModel.transits.map { $0.meteo })
+        case .signification:
+            return uniqueSortedStrings(viewModel.transits.map { significationPreview(for: $0) })
+        }
+    }
+
+    private func filterValue(for transit: Transit, column: TransitSortColumn) -> String {
+        switch column {
+        case .pic:
+            return picText(for: transit.picDate)
+        case .transitPlanet:
+            return transit.transitPlanet.capitalized
+        case .aspect:
+            return transit.aspect.displayName
+        case .natalPlanet:
+            return transit.natalPlanet.capitalized
+        case .startDate:
+            return dateText(transit.startDate)
+        case .endDate:
+            return dateText(transit.endDate)
+        case .orbe:
+            return String(format: "%.2f°", transit.orbe)
+        case .influence:
+            return influence(for: transit)
+        case .meteo:
+            return transit.meteo
+        case .signification:
+            return significationPreview(for: transit)
+        }
+    }
+
+    private func openFilter(_ column: TransitSortColumn) {
+        activeFilterColumn = column
+        pendingFilterSelections = activeFilters[column] ?? []
+    }
+
+    private func applyFilter() {
+        if let column = activeFilterColumn {
+            activeFilters[column] = pendingFilterSelections
+        }
+        activeFilterColumn = nil
+    }
+
+    private func cancelFilter() {
+        activeFilterColumn = nil
+        pendingFilterSelections = []
+    }
+
+    private func dateText(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "fr_FR")
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .none
+        return formatter.string(from: date)
+    }
+
+    private func picText(for date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "fr_FR")
+        formatter.dateFormat = "dd MMM"
+        return formatter.string(from: date)
+    }
+
+    private func uniqueSortedStrings(_ items: [String]) -> [String] {
+        let unique = Set(items)
+        return unique.sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+    }
+
+    private func significationPreview(for transit: Transit) -> String {
+        let interpretation = InterpretationService.shared.getInterpretation(for: transit)
+        let essence = interpretation?.essence?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let influence = interpretation?.influence.trimmingCharacters(in: .whitespacesAndNewlines)
+        let motsCles = interpretation?.motsCles?.trimmingCharacters(in: .whitespacesAndNewlines)
+        return essence?.isEmpty == false ? essence! : (motsCles?.isEmpty == false ? motsCles! : (influence ?? "—"))
     }
 }
 
@@ -1036,7 +1006,7 @@ private struct FilterSelectionView: View {
 private struct TransitTableRow: View {
     let transit: Transit
     let referenceDate: Date
-    @Binding var selectedSignification: String?
+    @Binding var selectedSignification: Transit?
 
     private var interpretation: TransitInterpretation? {
         InterpretationService.shared.getInterpretation(for: transit)
@@ -1120,7 +1090,7 @@ private struct TransitTableRow: View {
             .contentShape(Rectangle())
             .onTapGesture {
                 guard significationText != "—" else { return }
-                selectedSignification = significationText
+                selectedSignification = transit
             }
     }
 
@@ -1137,8 +1107,9 @@ private struct TransitTableRow: View {
 }
 
 private struct SignificationZoomView: View {
-    let text: String
-    @Binding var isPresented: String?
+    let transit: Transit
+    let interpretation: TransitInterpretation?
+    @Binding var isPresented: Transit?
 
     var body: some View {
         ZStack {
@@ -1150,7 +1121,7 @@ private struct SignificationZoomView: View {
                     }
                 }
 
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 18) {
                 HStack {
                     Text("Signification")
                         .font(.headline)
@@ -1167,19 +1138,133 @@ private struct SignificationZoomView: View {
                     .buttonStyle(.plain)
                 }
 
-                ScrollView {
-                    Text(text)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .multilineTextAlignment(.leading)
+                HStack(alignment: .center, spacing: 16) {
+                    planetCard(title: transit.transitPlanet.capitalized)
+                    aspectCard
+                    planetCard(title: transit.natalPlanet.capitalized)
                 }
-                .frame(maxHeight: 320)
+                .frame(maxWidth: .infinity)
+
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        ForEach(significationSections, id: \.title) { section in
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text(section.title)
+                                    .font(.subheadline.weight(.semibold))
+                                Text(section.body)
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .multilineTextAlignment(.leading)
+                            }
+                            .padding()
+                            .background(Color.white.opacity(0.75))
+                            .cornerRadius(12)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .frame(maxHeight: 360)
             }
+            .padding(20)
+            .frame(maxWidth: 560)
+            .background(Color(.systemGray6))
+            .cornerRadius(24)
+            .shadow(color: Color.black.opacity(0.2), radius: 24, x: 0, y: 10)
             .padding()
-            .frame(maxWidth: 520)
-            .background(.ultraThinMaterial)
-            .cornerRadius(18)
-            .shadow(color: Color.black.opacity(0.2), radius: 20, x: 0, y: 8)
-            .padding()
+        }
+    }
+
+    private var significationSections: [(title: String, body: String)] {
+        guard let interpretation else {
+            return [("Influence", "Aucune interprétation disponible pour ce transit.")]
+        }
+        let sections: [(String, String?)] = [
+            ("Essence du transit", interpretation.essence),
+            ("Ce qui peut arriver", interpretation.ceQuiPeutArriver),
+            ("Vie affective & familiale", interpretation.relations),
+            ("Vie professionnelle & sociale", interpretation.travail),
+            ("À éviter", interpretation.aEviter),
+            ("À faire", interpretation.aFaire),
+            ("Mots-clés", interpretation.motsCles),
+            ("Conseils d'intégration", interpretation.conseils.isEmpty ? nil : interpretation.conseils)
+        ]
+
+        let compacted = sections.compactMap { title, body -> (String, String)? in
+            guard let body, !body.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
+            return (title, body)
+        }
+
+        if compacted.isEmpty {
+            return [("Influence", interpretation.influence)]
+        }
+
+        return compacted
+    }
+
+    private func planetCard(title: String) -> some View {
+        VStack(spacing: 8) {
+            Text(planetSymbol(for: title))
+                .font(.system(size: 26))
+                .frame(width: 44, height: 44)
+                .background(Color.indigo.opacity(0.15), in: Circle())
+            Text(title)
+                .font(.subheadline.weight(.semibold))
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity)
+        .background(Color.white.opacity(0.85))
+        .cornerRadius(14)
+    }
+
+    private var aspectCard: some View {
+        VStack(spacing: 6) {
+            Text(transit.aspect.displayName)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.indigo)
+            Text(aspectSymbol(for: transit.aspect))
+                .font(.system(size: 28))
+        }
+        .frame(width: 90, height: 90)
+        .background(Color.white.opacity(0.85))
+        .cornerRadius(16)
+    }
+
+    private func aspectSymbol(for aspect: AspectType) -> String {
+        switch aspect {
+        case .trigone:
+            return "△"
+        case .sextile:
+            return "✶"
+        case .carre:
+            return "□"
+        case .opposition:
+            return "☍"
+        case .conjonction:
+            return "☌"
+        }
+    }
+
+    private func planetSymbol(for name: String) -> String {
+        switch name.lowercased() {
+        case "soleil": return "☉"
+        case "lune": return "☾"
+        case "mercure": return "☿"
+        case "vénus", "venus": return "♀"
+        case "mars": return "♂"
+        case "jupiter": return "♃"
+        case "saturne": return "♄"
+        case "uranus": return "♅"
+        case "neptune": return "♆"
+        case "pluton": return "♇"
+        case "nœud nord (vrai)", "noeud nord (vrai)": return "☊"
+        case "chiron": return "⚷"
+        case "cérès", "ceres": return "⚳"
+        case "pallas": return "⚴"
+        case "junon", "juno": return "⚵"
+        case "vesta": return "⚶"
+        case "lilith": return "⚸"
+        default: return "✦"
         }
     }
 }
@@ -1212,4 +1297,3 @@ struct TransitCSVDocument: FileDocument {
         FileWrapper(regularFileWithContents: Data(csv.utf8))
     }
 }
-
