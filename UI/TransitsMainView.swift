@@ -1,5 +1,8 @@
 import SwiftUI
 import UniformTypeIdentifiers
+#if os(macOS)
+import AppKit
+#endif
 
 // MARK: - 1. LE VIEWMODEL (Le cerveau qui partage les données)
 class TransitViewModel: ObservableObject {
@@ -538,7 +541,7 @@ struct TransitResultsView: View {
                 .transition(.scale.combined(with: .opacity))
             }
         }
-        .animation(.easeInOut(duration: 0.2), value: selectedSignification)
+        .animation(.easeInOut(duration: 0.2), value: selectedSignification?.id)
     }
     
     private var monthTitle: String {
@@ -1147,7 +1150,7 @@ private struct SignificationZoomView: View {
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
-                        ForEach(significationSections, id: \.title) { section in
+                        ForEach(significationSections) { section in
                             VStack(alignment: .leading, spacing: 8) {
                                 Text(section.title)
                                     .font(.subheadline.weight(.semibold))
@@ -1168,16 +1171,22 @@ private struct SignificationZoomView: View {
             }
             .padding(20)
             .frame(maxWidth: 560)
-            .background(Color(.systemGray6))
+            .background(modalBackground)
             .cornerRadius(24)
             .shadow(color: Color.black.opacity(0.2), radius: 24, x: 0, y: 10)
             .padding()
         }
     }
 
-    private var significationSections: [(title: String, body: String)] {
+    private struct SignificationSection: Identifiable {
+        let id = UUID()
+        let title: String
+        let body: String
+    }
+
+    private var significationSections: [SignificationSection] {
         guard let interpretation else {
-            return [("Influence", "Aucune interprétation disponible pour ce transit.")]
+            return [SignificationSection(title: "Influence", body: "Aucune interprétation disponible pour ce transit.")]
         }
         let sections: [(String, String?)] = [
             ("Essence du transit", interpretation.essence),
@@ -1190,16 +1199,24 @@ private struct SignificationZoomView: View {
             ("Conseils d'intégration", interpretation.conseils.isEmpty ? nil : interpretation.conseils)
         ]
 
-        let compacted = sections.compactMap { title, body -> (String, String)? in
+        let compacted = sections.compactMap { title, body -> SignificationSection? in
             guard let body, !body.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
-            return (title, body)
+            return SignificationSection(title: title, body: body)
         }
 
         if compacted.isEmpty {
-            return [("Influence", interpretation.influence)]
+            return [SignificationSection(title: "Influence", body: interpretation.influence)]
         }
 
         return compacted
+    }
+
+    private var modalBackground: Color {
+#if os(macOS)
+        return Color(nsColor: .windowBackgroundColor)
+#else
+        return Color(.systemGray6)
+#endif
     }
 
     private func planetCard(title: String) -> some View {
@@ -1297,3 +1314,4 @@ struct TransitCSVDocument: FileDocument {
         FileWrapper(regularFileWithContents: Data(csv.utf8))
     }
 }
+
