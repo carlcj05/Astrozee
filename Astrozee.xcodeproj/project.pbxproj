@@ -37,6 +37,7 @@
 		307F64072E6885E300645245 /* swemplan.c in Sources */ = {isa = PBXBuildFile; fileRef = 307F63F92E6885E300645245 /* swemplan.c */; };
 		30816C202F0EAE44004A49D2 /* HousePosition.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30816C1F2F0EAE41004A49D2 /* HousePosition.swift */; };
 		30816C4C2F0ECBB1004A49D2 /* TransitProfileComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30816C4B2F0ECBA9004A49D2 /* TransitProfileComponents.swift */; };
+		309D5F572F103441008610B2 /* TransitMoodChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 309D5F562F103433008610B2 /* TransitMoodChartView.swift */; };
 		30E4878E2F0D106A00E3CB34 /* InterpretationModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30E4878D2F0D106200E3CB34 /* InterpretationModel.swift */; };
 		30E487902F0D109900E3CB34 /* AstrologyEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30E4878F2F0D109200E3CB34 /* AstrologyEngine.swift */; };
 		30E487922F0D10BD00E3CB34 /* TransitView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30E487912F0D10B600E3CB34 /* TransitView.swift */; };
@@ -110,6 +111,7 @@
 		307F64182E68867C00645245 /* swevents.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = swevents.h; sourceTree = "<group>"; };
 		30816C1F2F0EAE41004A49D2 /* HousePosition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HousePosition.swift; sourceTree = "<group>"; };
 		30816C4B2F0ECBA9004A49D2 /* TransitProfileComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransitProfileComponents.swift; sourceTree = "<group>"; };
+		309D5F562F103433008610B2 /* TransitMoodChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransitMoodChartView.swift; sourceTree = "<group>"; };
 		30E4878D2F0D106200E3CB34 /* InterpretationModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InterpretationModel.swift; sourceTree = "<group>"; };
 		30E4878F2F0D109200E3CB34 /* AstrologyEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AstrologyEngine.swift; sourceTree = "<group>"; };
 		30E487912F0D10B600E3CB34 /* TransitView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransitView.swift; sourceTree = "<group>"; };
@@ -269,6 +271,7 @@
 		307F63AC2E68371A00645245 /* UI */ = {
 			isa = PBXGroup;
 			children = (
+				309D5F562F103433008610B2 /* TransitMoodChartView.swift */,
 				30816C4B2F0ECBA9004A49D2 /* TransitProfileComponents.swift */,
 				30E4879B2F0D3B0200E3CB34 /* TransitsMainView.swift */,
 				30217F782E69CE0B00800987 /* PlanetPositionsView.swift */,
@@ -533,6 +536,7 @@
 				30217F7D2E69CF1200800987 /* ProfileStore.swift in Sources */,
 				307F63CF2E684C4500645245 /* swedate.c in Sources */,
 				30E487922F0D10BD00E3CB34 /* TransitView.swift in Sources */,
+				309D5F572F103441008610B2 /* TransitMoodChartView.swift in Sources */,
 				307F63D02E684C4500645245 /* sweph.c in Sources */,
 				306716722E96948C008E8A72 /* InterpretationService.swift in Sources */,
 				306716732E96948C008E8A72 /* TransitCalculator.swift in Sources */,
