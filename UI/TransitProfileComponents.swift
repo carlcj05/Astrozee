@@ -35,28 +35,10 @@ struct NatalChartView: View {
                     .stroke(Color.indigo.opacity(0.2), lineWidth: 1)
                     .frame(width: houseRingRadius * 2, height: houseRingRadius * 2)
                 
-                ForEach(Array(0..<360), id: \.self) { (degree: Int) in
-                    let isHouseMarker = degree % 30 == 0
+                ForEach(0..<360, id: \.self) { degree in
                     let isMajor = degree % 10 == 0
-                    let isMinor = degree % 5 == 0
-                    var lineLength: CGFloat = chartRadius * 0.04
-                    var lineWidth: CGFloat = 0.6
-                    var lineOpacity: Double = 0.35
-                    
-                    if isHouseMarker {
-                        lineLength = chartRadius * 0.18
-                        lineWidth = 2.0
-                        lineOpacity = 0.9
-                    } else if isMajor {
-                        lineLength = chartRadius * 0.12
-                        lineWidth = 1.4
-                        lineOpacity = 0.7
-                    } else if isMinor {
-                        lineLength = chartRadius * 0.08
-                        lineWidth = 1.0
-                        lineOpacity = 0.55
-                    }
-                    
+                    let isMedium = degree % 5 == 0
+                    let lineLength = isMajor ? chartRadius * 0.12 : (isMedium ? chartRadius * 0.08 : chartRadius * 0.05)
                     let lineStart = point(on: Double(degree) - 90.0, radius: chartRadius - lineLength, center: center)
                     let lineEnd = point(on: Double(degree) - 90.0, radius: chartRadius, center: center)
                     
@@ -64,10 +46,10 @@ struct NatalChartView: View {
                         path.move(to: lineStart)
                         path.addLine(to: lineEnd)
                     }
-                    .stroke(Color.black.opacity(lineOpacity), lineWidth: lineWidth)
+                    .stroke(Color.indigo.opacity(isMajor ? 0.5 : 0.25), lineWidth: isMajor ? 1.2 : 0.8)
                 }
                 
-                ForEach(Array(0..<12), id: \.self) { (index: Int) in
+                ForEach(0..<12, id: \.self) { index in
                     let angle = Double(index) * 30.0 - 90.0
                     let lineStart = point(on: angle, radius: chartRadius * 0.38, center: center)
                     let lineEnd = point(on: angle, radius: chartRadius * 0.98, center: center)
@@ -84,7 +66,7 @@ struct NatalChartView: View {
                         .position(point(on: angle, radius: chartRadius * 0.78, center: center))
                 }
 
-                ForEach(houseLines) { house in
+                ForEach(houseLines, id: \.index) { house in
                     let angle = house.angle - 90.0
                     let lineStart = point(on: angle, radius: chartRadius * 0.32, center: center)
                     let lineEnd = point(on: angle, radius: chartRadius * 0.98, center: center)
@@ -330,7 +312,7 @@ struct NatalChartView: View {
         let value = angle.truncatingRemainder(dividingBy: 360)
         return value < 0 ? value + 360 : value
     }
-
+    
     private func angleSymbol(for angle: ChartAngle) -> String {
         switch angle.id {
         case "asc": return "ASC"
@@ -428,7 +410,7 @@ struct NatalPlanetDetailCard: View {
         case "mars": return "♂"
         case "jupiter": return "♃"
         case "saturne": return "♄"
-        case "uranus": return "♅"
+        case "uranus": return ""
         case "neptune": return "♆"
         case "pluton": return "♇"
         case "nœud nord (vrai)", "noeud nord (vrai)": return "☊"
@@ -514,31 +496,85 @@ struct DualityResult {
 
 struct NatalDualitySection: View {
     let result: DualityResult
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Polarités")
+            Text("Dualité")
                 .font(.headline)
-            
-            HStack(spacing: 12) {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Masculin")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Text("\(result.masculinePercent)%")
-                        .font(.title3.bold())
-                    ProgressView(value: result.masculine)
-                        .tint(.orange)
-                }
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Féminin")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Text("\(result.femininePercent)%")
-                        .font(.title3.bold())
-                    ProgressView(value: result.feminine)
-                        .tint(.purple)
-                }
+
+            DualityDonutView(masculine: result.masculine, feminine: result.feminine)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, 8)
+    }
+}
+
+struct DualityDonutView: View {
+    let masculine: Double
+    let feminine: Double
+
+    private var normalizedMasculine: Double {
+        let total = max(masculine + feminine, 1)
+        return masculine / total
+    }
+
+    var body: some View {
+        let masculinePercent = Int(round(normalizedMasculine * 100))
+        let femininePercent = 100 - masculinePercent
+        let masculineColor = Color(red: 0.6, green: 0.9216, blue: 1.0)
+        let feminineColor = Color(red: 0.9451, green: 0.6, blue: 1.0)
+
+        VStack(spacing: 12) {
+            ZStack {
+                Circle()
+                    .stroke(Color.black.opacity(0.08), lineWidth: 18)
+
+                Circle()
+                    .trim(from: 0, to: normalizedMasculine)
+                    .stroke(masculineColor, style: StrokeStyle(lineWidth: 18, lineCap: .butt))
+                    .rotationEffect(.degrees(-90))
+
+                Circle()
+                    .trim(from: normalizedMasculine, to: 1)
+                    .stroke(feminineColor, style: StrokeStyle(lineWidth: 18, lineCap: .butt))
+                    .rotationEffect(.degrees(-90))
+
+                Text("Dualité")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .frame(width: 140, height: 140)
+
+            HStack(spacing: 20) {
+                DualityLabel(symbol: "♂", title: "Masculin", percent: masculinePercent, color: masculineColor)
+                DualityLabel(symbol: "♀", title: "Féminin", percent: femininePercent, color: feminineColor)
+            }
+        }
+    }
+}
+
+struct DualityLabel: View {
+    let symbol: String
+    let title: String
+    let percent: Int
+    let color: Color
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Text(symbol)
+                .font(.headline)
+                .foregroundStyle(color)
+                .padding(6)
+                .background(color.opacity(0.12), in: Circle())
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Text("\(percent)%")
+                    .font(.headline)
+                    .monospacedDigit()
+                    .foregroundStyle(.primary)
             }
         }
     }
@@ -548,40 +584,63 @@ struct NatalAnglesSection: View {
     let angles: [ChartAngle]
     let points: [ChartPoint]
 
+    private let columns = [
+        GridItem(.adaptive(minimum: 140), spacing: 12, alignment: .leading)
+    ]
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Angles clés")
+            Text("Angles & points")
                 .font(.headline)
 
-            ForEach(angles) { angle in
-                HStack {
+            LazyVGrid(columns: columns, spacing: 12) {
+                ForEach(angles) { angle in
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(angle.name)
-                            .font(.subheadline.weight(.semibold))
+                        Text(angleLabel(for: angle))
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
                         Text("\(angle.sign) • \(angle.degreeInSign)")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
-                    Spacer()
+                    .padding(10)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.white.opacity(0.7))
+                    .cornerRadius(12)
                 }
-                .padding(.vertical, 6)
-                Divider()
-            }
 
-            ForEach(points) { point in
-                HStack {
+                ForEach(points) { point in
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(point.name)
-                            .font(.subheadline.weight(.semibold))
+                        Text(pointLabel(for: point))
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
                         Text("\(point.sign) • \(point.degreeInSign)")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
-                    Spacer()
+                    .padding(10)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.white.opacity(0.7))
+                    .cornerRadius(12)
                 }
-                .padding(.vertical, 6)
-                Divider()
             }
+        }
+    }
+
+    private func angleLabel(for angle: ChartAngle) -> String {
+        switch angle.id {
+        case "asc": return "ASC • \(angle.name)"
+        case "dsc": return "DSC • \(angle.name)"
+        case "mc": return "MC • \(angle.name)"
+        case "ic": return "IC • \(angle.name)"
+        default: return angle.name
+        }
+    }
+
+    private func pointLabel(for point: ChartPoint) -> String {
+        switch point.id {
+        case "fortune": return "⊗ \(point.name)"
+        default: return point.name
         }
     }
 }
@@ -589,26 +648,38 @@ struct NatalAnglesSection: View {
 struct NatalHousesSection: View {
     let cusps: [HouseCusp]
 
+    private let columns = [
+        GridItem(.adaptive(minimum: 120), spacing: 12, alignment: .leading)
+    ]
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Maisons")
                 .font(.headline)
 
-            ForEach(cusps) { cusp in
-                HStack {
+            LazyVGrid(columns: columns, spacing: 12) {
+                ForEach(cusps) { cusp in
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Maison \(cusp.id)")
-                            .font(.subheadline.weight(.semibold))
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
                         Text("\(cusp.sign) • \(cusp.degreeInSign)")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
-                    Spacer()
+                    .padding(10)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.white.opacity(0.7))
+                    .cornerRadius(12)
                 }
-                .padding(.vertical, 6)
-                Divider()
             }
         }
     }
 }
+
+//  TransitProfileComponent.swift
+//  Astrozee
+//
+//  Created by Carl  Ozee on 07/01/2026.
+//
 
