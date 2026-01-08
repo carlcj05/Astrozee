@@ -958,6 +958,9 @@ private struct TransitTableHeader: View {
                       : "line.3.horizontal.decrease.circle")
                     .font(.caption2)
             }
+            #if os(iOS)
+            .menuActionDismissBehavior(.disabled)
+            #endif
             .buttonStyle(.plain)
         }
     }
