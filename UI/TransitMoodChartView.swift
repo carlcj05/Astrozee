@@ -6,22 +6,11 @@ struct TransitMoodChartView: View {
     @ObservedObject var viewModel: TransitViewModel
     @State private var selectedWeek: MoodWeekKey?
     @State private var selectedSignification: String?
-    @State private var activeThemeFilters: Set<ThemeCategory> = []
 
     var body: some View {
         VStack(spacing: 16) {
             contentSection
         }
-        .overlay {
-            if let selectedSignification {
-                SignificationZoomView(
-                    text: selectedSignification,
-                    isPresented: $selectedSignification
-                )
-                .transition(.scale.combined(with: .opacity))
-            }
-        }
-        .animation(.easeInOut(duration: 0.2), value: selectedSignification)
     }
 
     @ViewBuilder
@@ -51,9 +40,6 @@ struct TransitMoodChartView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Moodchart · \(monthTitle)")
                 .font(.headline)
-                .padding(.horizontal)
-
-            themeFilterBar
                 .padding(.horizontal)
 
             chartSection
@@ -131,41 +117,6 @@ struct TransitMoodChartView: View {
         .padding(.horizontal)
     }
 
-    private var themeFilterBar: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                ForEach(ThemeCategory.allCases) { category in
-                    let isActive = activeThemeFilters.contains(category)
-                    Button {
-                        toggleTheme(category)
-                    } label: {
-                        Text(category.displayName)
-                            .font(.caption.weight(.semibold))
-                            .padding(.vertical, 6)
-                            .padding(.horizontal, 12)
-                            .background(isActive ? Color.indigo.opacity(0.2) : Color.gray.opacity(0.12))
-                            .foregroundStyle(isActive ? .indigo : .secondary)
-                            .clipShape(Capsule())
-                    }
-                    .buttonStyle(.plain)
-                }
-
-                if !activeThemeFilters.isEmpty {
-                    Button("Réinitialiser") {
-                        activeThemeFilters.removeAll()
-                    }
-                    .font(.caption.weight(.semibold))
-                    .padding(.vertical, 6)
-                    .padding(.horizontal, 12)
-                    .background(Color.orange.opacity(0.15))
-                    .foregroundStyle(.orange)
-                    .clipShape(Capsule())
-                    .buttonStyle(.plain)
-                }
-            }
-        }
-    }
-
     private var moodLegend: some View {
         HStack(spacing: 12) {
             ForEach(MoodCategory.allCases) { category in
@@ -194,36 +145,48 @@ struct TransitMoodChartView: View {
                 }
                 .padding(.horizontal)
 
-                ScrollView(.horizontal) {
+                HStack(alignment: .top, spacing: 16) {
                     ScrollView(.vertical) {
-                        LazyVStack(alignment: .leading, spacing: 8) {
-                            MoodTransitTableHeader()
+                        LazyVStack(alignment: .leading, spacing: 12) {
                             ForEach(selectedWeekTransits) { transit in
-                                MoodTransitRow(
-                                    transit: transit,
-                                    selectedSignification: $selectedSignification
-                                )
+                                Button {
+                                    selectedSignification = significationText(for: transit)
+                                } label: {
+                                    MoodTransitSummaryRow(transit: transit)
+                                }
+                                .buttonStyle(.plain)
                             }
                         }
-                        .frame(minWidth: MoodTransitColumnWidth.totalWidth, alignment: .leading)
                         .padding(.horizontal)
                         .padding(.bottom, 12)
                     }
+                    .frame(maxWidth: 360, alignment: .leading)
+
+                    Divider()
+
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Signification")
+                            .font(.headline)
+                        if let selectedSignification, selectedSignification != "—" {
+                            ScrollView {
+                                Text(selectedSignification)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                        } else {
+                            Text("Sélectionne un transit pour afficher sa signification.")
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.trailing)
                 }
+                .padding(.bottom, 12)
             } else {
                 Text("Touchez une barre pour afficher le détail des transits.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .padding(.horizontal)
             }
-        }
-    }
-
-    private func toggleTheme(_ category: ThemeCategory) {
-        if activeThemeFilters.contains(category) {
-            activeThemeFilters.remove(category)
-        } else {
-            activeThemeFilters.insert(category)
         }
     }
 
@@ -238,11 +201,7 @@ struct TransitMoodChartView: View {
         let monthFiltered = viewModel.transits.filter { transit in
             isInSelectedMonth(transit.picDate)
         }
-        guard !activeThemeFilters.isEmpty else { return monthFiltered }
-        return monthFiltered.filter { transit in
-            let themes = themeCategories(for: transit)
-            return !themes.isDisjoint(with: activeThemeFilters)
-        }
+        return monthFiltered
     }
 
     private var moodWeekKeys: [MoodWeekKey] {
@@ -314,27 +273,28 @@ struct TransitMoodChartView: View {
         }
     }
 
-    private func themeCategories(for transit: Transit) -> Set<ThemeCategory> {
-        let interpretation = InterpretationService.shared.getInterpretation(for: transit)
-        var themes: Set<ThemeCategory> = []
-
-        if interpretation?.relations != nil {
-            themes.insert(.relationnel)
-        }
-        if interpretation?.travail != nil {
-            themes.insert(.carriere)
-        }
-        if themes.isEmpty {
-            themes.insert(.emotion)
-        }
-
-        return themes
-    }
-
     private func normalizePlanetName(_ name: String) -> String {
         name.lowercased()
             .trimmingCharacters(in: .whitespaces)
             .folding(options: .diacriticInsensitive, locale: .current)
+    }
+
+    private func significationText(for transit: Transit) -> String {
+        let interpretation = InterpretationService.shared.getInterpretation(for: transit)
+        let essence = interpretation?.essence?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let influence = interpretation?.influence.trimmingCharacters(in: .whitespacesAndNewlines)
+        let motsCles = interpretation?.motsCles?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let raw = essence?.isEmpty == false ? essence! : (motsCles?.isEmpty == false ? motsCles! : (influence ?? "—"))
+        return formatSignification(raw)
+    }
+
+    private func formatSignification(_ text: String) -> String {
+        let markers = ["✴️", "🔮", "❤️", "💼", "🧭", "🌱", "💡"]
+        var formatted = text
+        for marker in markers {
+            formatted = formatted.replacingOccurrences(of: marker, with: "\n\(marker)")
+        }
+        return formatted.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     private func isInSelectedMonth(_ date: Date) -> Bool {
@@ -412,61 +372,23 @@ private enum MoodCategory: String, CaseIterable, Identifiable {
     ]
 }
 
-private enum ThemeCategory: String, CaseIterable, Identifiable {
-    case relationnel
-    case carriere
-    case emotion
-
-    var id: String { rawValue }
-
-    var displayName: String {
-        switch self {
-        case .relationnel:
-            return "Relationnel"
-        case .carriere:
-            return "Carrière"
-        case .emotion:
-            return "Émotion"
-        }
-    }
-}
-
-private struct MoodTransitTableHeader: View {
-    var body: some View {
-        GridRow {
-            headerCell("Pic", width: MoodTransitColumnWidth.pic)
-            headerCell("Planète transit", width: MoodTransitColumnWidth.planet)
-            headerCell("Aspect", width: MoodTransitColumnWidth.aspect)
-            headerCell("Planète natale", width: MoodTransitColumnWidth.planet)
-            headerCell("Signification", width: MoodTransitColumnWidth.signification)
-        }
-        .font(.caption.weight(.semibold))
-        .foregroundStyle(.secondary)
-    }
-
-    private func headerCell(_ text: String, width: CGFloat) -> some View {
-        Text(text)
-            .frame(width: width, alignment: .leading)
-    }
-}
-
-private struct MoodTransitRow: View {
+private struct MoodTransitSummaryRow: View {
     let transit: Transit
-    @Binding var selectedSignification: String?
-
-    private var interpretation: TransitInterpretation? {
-        InterpretationService.shared.getInterpretation(for: transit)
-    }
 
     var body: some View {
-        GridRow {
-            cell(picText, width: MoodTransitColumnWidth.pic)
-            cell(transit.transitPlanet.capitalized, width: MoodTransitColumnWidth.planet)
+        VStack(alignment: .leading, spacing: 6) {
+            Text(picText)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Text(transit.transitPlanet.capitalized)
+                .font(.headline)
             aspectCell
-            cell(transit.natalPlanet.capitalized, width: MoodTransitColumnWidth.planet)
-            significationCell
+            Text(transit.natalPlanet.capitalized)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
         }
-        Divider()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, 6)
     }
 
     private var picText: String {
@@ -481,36 +403,9 @@ private struct MoodTransitRow: View {
             .font(.caption.weight(.semibold))
             .padding(.vertical, 4)
             .padding(.horizontal, 6)
-            .frame(width: MoodTransitColumnWidth.aspect, alignment: .leading)
             .background(colorForAspect(transit.aspect).opacity(0.12))
             .cornerRadius(6)
             .foregroundStyle(colorForAspect(transit.aspect))
-    }
-
-    private func cell(_ text: String, width: CGFloat) -> some View {
-        Text(text)
-            .font(.subheadline)
-            .frame(width: width, alignment: .leading)
-            .lineLimit(2)
-    }
-
-    private var significationText: String {
-        let essence = interpretation?.essence?.trimmingCharacters(in: .whitespacesAndNewlines)
-        let influence = interpretation?.influence.trimmingCharacters(in: .whitespacesAndNewlines)
-        let motsCles = interpretation?.motsCles?.trimmingCharacters(in: .whitespacesAndNewlines)
-        return essence?.isEmpty == false ? essence! : (motsCles?.isEmpty == false ? motsCles! : (influence ?? "—"))
-    }
-
-    private var significationCell: some View {
-        Text(significationText)
-            .font(.subheadline)
-            .frame(width: MoodTransitColumnWidth.signification, alignment: .leading)
-            .lineLimit(2)
-            .contentShape(Rectangle())
-            .onTapGesture {
-                guard significationText != "—" else { return }
-                selectedSignification = significationText
-            }
     }
 
     private func colorForAspect(_ aspect: AspectType) -> Color {
@@ -523,12 +418,4 @@ private struct MoodTransitRow: View {
             return .blue
         }
     }
-}
-
-private enum MoodTransitColumnWidth {
-    static let pic: CGFloat = 80
-    static let planet: CGFloat = 130
-    static let aspect: CGFloat = 110
-    static let signification: CGFloat = 320
-    static let totalWidth: CGFloat = pic + planet + aspect + planet + signification + 60
 }
