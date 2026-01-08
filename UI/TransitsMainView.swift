@@ -432,6 +432,8 @@ struct TransitResultsView: View {
     @ObservedObject var viewModel: TransitViewModel
     @State private var isExportingCSV = false
     @State private var selectedSignification: String?
+    @State private var sortColumn: TransitSortColumn = .pic
+    @State private var sortAscending = true
     
     var body: some View {
         VStack {
@@ -481,7 +483,11 @@ struct TransitResultsView: View {
                                             .foregroundStyle(.secondary)
                                         
                                         Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 8) {
-                                            TransitTableHeader()
+                                            TransitTableHeader(
+                                                sortColumn: sortColumn,
+                                                sortAscending: sortAscending,
+                                                onSort: toggleSort
+                                            )
                                             ForEach(section.transits) { transit in
                                                 TransitTableRow(
                                                     transit: transit,
@@ -639,9 +645,98 @@ struct TransitResultsView: View {
 
         return InfluenceGroup.allCases.compactMap { group in
             guard let transits = grouped[group] else { return nil }
-            let sorted = transits.sorted { $0.picDate < $1.picDate }
+            let sorted = sortTransits(transits)
             return (group, sorted)
         }
+    }
+
+    private func toggleSort(_ column: TransitSortColumn) {
+        if sortColumn == column {
+            sortAscending.toggle()
+        } else {
+            sortColumn = column
+            sortAscending = true
+        }
+    }
+
+    private func sortTransits(_ transits: [Transit]) -> [Transit] {
+        transits.sorted { lhs, rhs in
+            let comparison = sortComparison(lhs, rhs)
+            if comparison == .orderedSame {
+                return lhs.picDate < rhs.picDate
+            }
+            return sortAscending ? (comparison == .orderedAscending) : (comparison == .orderedDescending)
+        }
+    }
+
+    private func sortComparison(_ lhs: Transit, _ rhs: Transit) -> ComparisonResult {
+        switch sortColumn {
+        case .pic:
+            return compare(lhs.picDate, rhs.picDate)
+        case .transitPlanet:
+            return compare(lhs.transitPlanet, rhs.transitPlanet)
+        case .aspect:
+            return compare(aspectSortIndex(for: lhs.aspect), aspectSortIndex(for: rhs.aspect))
+        case .natalPlanet:
+            return compare(lhs.natalPlanet, rhs.natalPlanet)
+        case .startDate:
+            return compare(lhs.startDate, rhs.startDate)
+        case .endDate:
+            return compare(lhs.endDate, rhs.endDate)
+        case .orbe:
+            return compare(lhs.orbe, rhs.orbe)
+        case .influence:
+            return compare(influenceText(for: lhs), influenceText(for: rhs))
+        case .meteo:
+            return compare(lhs.meteo, rhs.meteo)
+        case .signification:
+            return compare(significationPreview(for: lhs), significationPreview(for: rhs))
+        }
+    }
+
+    private func aspectSortIndex(for aspect: AspectType) -> Int {
+        TransitSortColumn.aspectOrder.firstIndex(of: aspect) ?? 0
+    }
+
+    private func influenceText(for transit: Transit) -> String {
+        let calendar = Calendar.current
+        let picMonth = calendar.component(.month, from: transit.picDate)
+        let referenceMonth = calendar.component(.month, from: viewModel.selectedDate)
+
+        if picMonth == referenceMonth {
+            return "pic du mois"
+        }
+        if abs(picMonth - referenceMonth) == 1 {
+            return "pic 1 mois avant/après"
+        }
+        return "pic plus d'un mois après"
+    }
+
+    private func significationPreview(for transit: Transit) -> String {
+        let interpretation = InterpretationService.shared.getInterpretation(for: transit)
+        let essence = interpretation?.essence?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let influence = interpretation?.influence.trimmingCharacters(in: .whitespacesAndNewlines)
+        let motsCles = interpretation?.motsCles?.trimmingCharacters(in: .whitespacesAndNewlines)
+        return essence?.isEmpty == false ? essence! : (motsCles?.isEmpty == false ? motsCles! : (influence ?? "—"))
+    }
+
+    private func compare(_ lhs: String, _ rhs: String) -> ComparisonResult {
+        lhs.localizedCaseInsensitiveCompare(rhs)
+    }
+
+    private func compare(_ lhs: Date, _ rhs: Date) -> ComparisonResult {
+        if lhs == rhs { return .orderedSame }
+        return lhs < rhs ? .orderedAscending : .orderedDescending
+    }
+
+    private func compare(_ lhs: Double, _ rhs: Double) -> ComparisonResult {
+        if lhs == rhs { return .orderedSame }
+        return lhs < rhs ? .orderedAscending : .orderedDescending
+    }
+
+    private func compare(_ lhs: Int, _ rhs: Int) -> ComparisonResult {
+        if lhs == rhs { return .orderedSame }
+        return lhs < rhs ? .orderedAscending : .orderedDescending
     }
 }
 
@@ -664,27 +759,64 @@ private enum InfluenceGroup: Int, CaseIterable, Hashable, Identifiable {
     }
 }
 
+private enum TransitSortColumn: Hashable {
+    case pic
+    case transitPlanet
+    case aspect
+    case natalPlanet
+    case startDate
+    case endDate
+    case orbe
+    case influence
+    case meteo
+    case signification
+
+    static let aspectOrder: [AspectType] = [
+        .conjonction,
+        .carre,
+        .opposition,
+        .trigone,
+        .sextile
+    ]
+}
+
 private struct TransitTableHeader: View {
+    let sortColumn: TransitSortColumn
+    let sortAscending: Bool
+    let onSort: (TransitSortColumn) -> Void
+
     var body: some View {
         GridRow {
-            headerCell("Pic", width: TransitColumnWidth.pic)
-            headerCell("Planète transit", width: TransitColumnWidth.planet)
-            headerCell("Aspect", width: TransitColumnWidth.aspect)
-            headerCell("Planète natale", width: TransitColumnWidth.planet)
-            headerCell("Début", width: TransitColumnWidth.date)
-            headerCell("Fin", width: TransitColumnWidth.date)
-            headerCell("Orbe", width: TransitColumnWidth.orbe)
-            headerCell("Influence", width: TransitColumnWidth.influence)
-            headerCell("Météo", width: TransitColumnWidth.meteo)
-            headerCell("Signification", width: TransitColumnWidth.signification)
+            headerCell("Pic", column: .pic, width: TransitColumnWidth.pic)
+            headerCell("Planète transit", column: .transitPlanet, width: TransitColumnWidth.planet)
+            headerCell("Aspect", column: .aspect, width: TransitColumnWidth.aspect)
+            headerCell("Planète natale", column: .natalPlanet, width: TransitColumnWidth.planet)
+            headerCell("Début", column: .startDate, width: TransitColumnWidth.date)
+            headerCell("Fin", column: .endDate, width: TransitColumnWidth.date)
+            headerCell("Orbe", column: .orbe, width: TransitColumnWidth.orbe)
+            headerCell("Influence", column: .influence, width: TransitColumnWidth.influence)
+            headerCell("Météo", column: .meteo, width: TransitColumnWidth.meteo)
+            headerCell("Signification", column: .signification, width: TransitColumnWidth.signification)
         }
         .font(.caption.weight(.semibold))
         .foregroundStyle(.secondary)
     }
 
-    private func headerCell(_ text: String, width: CGFloat) -> some View {
-        Text(text)
+    private func headerCell(_ text: String, column: TransitSortColumn, width: CGFloat) -> some View {
+        Button {
+            onSort(column)
+        } label: {
+            HStack(spacing: 4) {
+                Text(text)
+                if sortColumn == column {
+                    Image(systemName: sortAscending ? "arrowtriangle.up.fill" : "arrowtriangle.down.fill")
+                        .font(.caption2)
+                }
+            }
             .frame(width: width, alignment: .leading)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 }
 
