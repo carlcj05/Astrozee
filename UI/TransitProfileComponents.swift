@@ -17,6 +17,14 @@ struct NatalChartView: View {
             let houseRingRadius = chartRadius * 0.9
             let planetBaseRadius = chartRadius * 0.98
             let leaderStartRadius = chartRadius * 0.78
+            let planetBubbleSize = size * 0.095
+            let planetBubbleMargin = size * 0.012
+            let planetRadialStep = size * 0.065
+            let labelRadius = chartRadius * 1.08
+            let labelColumnOffset = chartRadius * 1.22
+            let labelMinSpacing = max(size * 0.045, 18)
+            let labelClampPadding = size * 0.045
+            let outerRingRadius = chartRadius * 1.02
             
             ZStack {
                 Circle()
@@ -94,10 +102,11 @@ struct NatalChartView: View {
 
                 ForEach(aspects) { aspect in
                     Path { path in
-                        path.move(to: point(on: aspect.startAngle - 90.0, radius: aspectRadius, center: center))
-                        path.addLine(to: point(on: aspect.endAngle - 90.0, radius: aspectRadius, center: center))
+                        let adjustedRadius = aspectRadius + aspect.radialOffset
+                        path.move(to: point(on: aspect.startAngle - 90.0, radius: adjustedRadius, center: center))
+                        path.addLine(to: point(on: aspect.endAngle - 90.0, radius: adjustedRadius, center: center))
                     }
-                    .stroke(aspect.color.opacity(0.6), lineWidth: 1)
+                    .stroke(aspect.color.opacity(0.5), lineWidth: 0.6)
                 }
 
                 ForEach(angles) { angle in
@@ -111,17 +120,35 @@ struct NatalChartView: View {
                         .position(point)
                 }
                 
-                ForEach(layoutPlanets(positions: positions, baseRadius: planetBaseRadius)) { layout in
+                ForEach(layoutPlanets(
+                    positions: positions,
+                    baseRadius: planetBaseRadius,
+                    center: center,
+                    bubbleDiameter: planetBubbleSize,
+                    bubbleMargin: planetBubbleMargin,
+                    radialStep: planetRadialStep,
+                    labelRadius: labelRadius,
+                    labelColumnOffset: labelColumnOffset,
+                    labelMinSpacing: labelMinSpacing,
+                    labelClampPadding: labelClampPadding
+                )) { layout in
                     let planet = layout.planet
                     let planetPoint = point(on: layout.angle, radius: layout.radius, center: center)
                     let isSelected = planet.id == selectedPlanet?.id
+                    let finalLabelPoint = layout.labelPoint
+                    let elbowPoint = elbowPoint(
+                        for: finalLabelPoint,
+                        center: center,
+                        radius: outerRingRadius,
+                        side: layout.labelSide
+                    )
 
                     Path { path in
                         let basePoint = point(on: layout.angle, radius: leaderStartRadius, center: center)
                         path.move(to: basePoint)
                         path.addLine(to: planetPoint)
                     }
-                    .stroke(Color.black.opacity(0.6), lineWidth: 1)
+                    .stroke(Color.black.opacity(0.45), lineWidth: 0.8)
                     
                     Button {
                         withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
@@ -145,10 +172,17 @@ struct NatalChartView: View {
                     .buttonStyle(.plain)
                     .position(planetPoint)
 
+                    Path { path in
+                        path.move(to: planetPoint)
+                        path.addLine(to: elbowPoint)
+                        path.addLine(to: finalLabelPoint)
+                    }
+                    .stroke(Color.black.opacity(0.45), style: StrokeStyle(lineWidth: 0.8, lineCap: .round, lineJoin: .round))
+
                     Text(planet.degreeInSign)
                         .font(.system(size: size * 0.03, weight: .semibold))
                         .foregroundStyle(Color.black.opacity(0.7))
-                        .position(point(on: layout.angle, radius: layout.radius + 24, center: center))
+                        .position(finalLabelPoint)
                 }
                 
                 VStack(spacing: 4) {
@@ -219,46 +253,220 @@ struct NatalChartView: View {
         }
     }
     
-    private func layoutPlanets(positions: [PlanetPosition], baseRadius: CGFloat) -> [PlanetLayout] {
+    private func layoutPlanets(
+        positions: [PlanetPosition],
+        baseRadius: CGFloat,
+        center: CGPoint,
+        bubbleDiameter: CGFloat,
+        bubbleMargin: CGFloat,
+        radialStep: CGFloat,
+        labelRadius: CGFloat,
+        labelColumnOffset: CGFloat,
+        labelMinSpacing: CGFloat,
+        labelClampPadding: CGFloat
+    ) -> [PlanetLayout] {
         let sorted = positions.sorted { $0.longitude < $1.longitude }
+        let minSeparation = bubbleSeparationDegrees(
+            radius: baseRadius,
+            bubbleDiameter: bubbleDiameter,
+            bubbleMargin: bubbleMargin
+        )
+        let grouped = clusterPlanets(sorted, minSeparation: minSeparation)
         var layouts: [PlanetLayout] = []
-        var lastAngle: Double?
-        var stackIndex = 0
-        
-        for planet in sorted {
-            let angle = planet.longitude - 90.0
-            if let lastAngle, abs(normalize(angle - lastAngle)) < 6 {
-                stackIndex += 1
-            } else {
-                stackIndex = 0
-            }
-            
-            let radialOffset = CGFloat(stackIndex) * 20.0
-            let radius = baseRadius + radialOffset
-            layouts.append(
-                PlanetLayout(
-                    id: planet.id,
-                    planet: planet,
-                    angle: angle,
-                    radius: radius
+        layouts.reserveCapacity(positions.count)
+
+        var candidates: [LabelCandidate] = []
+        candidates.reserveCapacity(positions.count)
+
+        for cluster in grouped {
+            let count = cluster.count
+            for (index, planet) in cluster.enumerated() {
+                let angle = planet.longitude - 90.0
+                let radius = baseRadius + radialStep * CGFloat(index)
+                let angleRadians = angle * .pi / 180
+                let isRight = cos(angleRadians) >= 0
+                let targetY = center.y + sin(angleRadians) * labelRadius
+                let side: LabelSide = isRight ? .right : .left
+
+                layouts.append(
+                    PlanetLayout(
+                        id: planet.id,
+                        planet: planet,
+                        angle: angle,
+                        radius: radius,
+                        labelPoint: .zero,
+                        labelSide: side
+                    )
                 )
-            )
-            lastAngle = angle
+                candidates.append(
+                    LabelCandidate(
+                        id: planet.id,
+                        side: side,
+                        targetY: targetY
+                    )
+                )
+            }
         }
-        
-        return layouts
+
+        let resolved = resolveLabelPositions(
+            candidates: candidates,
+            center: center,
+            labelColumnOffset: labelColumnOffset,
+            minSpacing: labelMinSpacing,
+            clampPadding: labelClampPadding,
+            labelRadius: labelRadius
+        )
+
+        return layouts.map { layout in
+            guard let resolvedLabel = resolved[layout.id] else { return layout }
+            return PlanetLayout(
+                id: layout.id,
+                planet: layout.planet,
+                angle: layout.angle,
+                radius: layout.radius,
+                labelPoint: resolvedLabel.point,
+                labelSide: resolvedLabel.side
+            )
+        }
+    }
+
+    private func bubbleSeparationDegrees(radius: CGFloat, bubbleDiameter: CGFloat, bubbleMargin: CGFloat) -> Double {
+        let total = bubbleDiameter + bubbleMargin
+        guard radius > 0 else { return 0 }
+        let radians = Double(total / radius)
+        return radians * 180 / .pi
+    }
+
+    private func clusterPlanets(_ planets: [PlanetPosition], minSeparation: Double) -> [[PlanetPosition]] {
+        guard !planets.isEmpty else { return [] }
+        var clusters: [[PlanetPosition]] = []
+        var current: [PlanetPosition] = []
+        var lastLongitude: Double?
+
+        for planet in planets {
+            if let lastLongitude, shortestAngleDistance(planet.longitude, lastLongitude) < minSeparation {
+                current.append(planet)
+            } else {
+                if !current.isEmpty {
+                    clusters.append(current)
+                }
+                current = [planet]
+            }
+            lastLongitude = planet.longitude
+        }
+
+        if !current.isEmpty {
+            clusters.append(current)
+        }
+
+        if clusters.count > 1,
+           let first = clusters.first,
+           let last = clusters.last,
+           let firstLongitude = first.first?.longitude,
+           let lastLongitude = last.last?.longitude,
+           shortestAngleDistance(firstLongitude, lastLongitude) < minSeparation {
+            clusters[0] = last + first
+            clusters.removeLast()
+        }
+
+        return clusters
     }
     
-    private func normalize(_ delta: Double) -> Double {
-        var value = delta.truncatingRemainder(dividingBy: 360)
+    private func resolveLabelPositions(
+        candidates: [LabelCandidate],
+        center: CGPoint,
+        labelColumnOffset: CGFloat,
+        minSpacing: CGFloat,
+        clampPadding: CGFloat,
+        labelRadius: CGFloat
+    ) -> [Int: ResolvedLabel] {
+        let boundsTop = center.y - labelRadius + clampPadding
+        let boundsBottom = center.y + labelRadius - clampPadding
+
+        let rightCandidates = candidates.filter { $0.side == .right }
+        let leftCandidates = candidates.filter { $0.side == .left }
+
+        let rightLabels = stackLabels(
+            candidates: rightCandidates,
+            top: boundsTop,
+            bottom: boundsBottom,
+            minSpacing: minSpacing
+        )
+        let leftLabels = stackLabels(
+            candidates: leftCandidates,
+            top: boundsTop,
+            bottom: boundsBottom,
+            minSpacing: minSpacing
+        )
+
+        var resolved: [Int: ResolvedLabel] = [:]
+        for label in rightLabels {
+            resolved[label.id] = ResolvedLabel(
+                point: CGPoint(x: center.x + labelColumnOffset, y: label.y),
+                side: .right
+            )
+        }
+        for label in leftLabels {
+            resolved[label.id] = ResolvedLabel(
+                point: CGPoint(x: center.x - labelColumnOffset, y: label.y),
+                side: .left
+            )
+        }
+        return resolved
+    }
+
+    private func stackLabels(
+        candidates: [LabelCandidate],
+        top: CGFloat,
+        bottom: CGFloat,
+        minSpacing: CGFloat
+    ) -> [LabelStack] {
+        let sorted = candidates.sorted { $0.targetY < $1.targetY }
+        var stacked: [LabelStack] = []
+        stacked.reserveCapacity(sorted.count)
+        var previousY: CGFloat?
+
+        for candidate in sorted {
+            let target = candidate.targetY
+            let y = max(target, (previousY ?? target) + (previousY == nil ? 0 : minSpacing))
+            stacked.append(LabelStack(id: candidate.id, y: y))
+            previousY = y
+        }
+
+        guard let first = stacked.first, let last = stacked.last else { return stacked }
+        var shift: CGFloat = 0
+        if first.y < top {
+            shift = top - first.y
+        } else if last.y > bottom {
+            shift = bottom - last.y
+        }
+
+        if shift != 0 {
+            stacked = stacked.map { LabelStack(id: $0.id, y: $0.y + shift) }
+        }
+
+        return stacked
+    }
+    
+    private func shortestAngleDistance(_ a: Double, _ b: Double) -> Double {
+        var value = (a - b).truncatingRemainder(dividingBy: 360)
         if value < -180 { value += 360 }
         if value > 180 { value -= 360 }
         return abs(value)
     }
 
+    private func elbowPoint(for labelPoint: CGPoint, center: CGPoint, radius: CGFloat, side: LabelSide) -> CGPoint {
+        let dy = labelPoint.y - center.y
+        let clamped = max(radius * radius - dy * dy, 0)
+        let dx = sqrt(clamped)
+        let x = center.x + (side == .right ? dx : -dx)
+        return CGPoint(x: x, y: labelPoint.y)
+    }
+
     private var aspects: [NatalAspect] {
         let planets = positions
         var results: [NatalAspect] = []
+        var index = 0
         for i in 0..<planets.count {
             for j in (i + 1)..<planets.count {
                 let first = planets[i]
@@ -271,15 +479,31 @@ struct NatalChartView: View {
                                 id: "\(first.id)-\(second.id)-\(aspect.rawValue)",
                                 startAngle: first.longitude,
                                 endAngle: second.longitude,
-                                color: colorForAspect(aspect)
+                                color: colorForAspect(aspect),
+                                radialOffset: aspectOffset(for: aspect, index: index)
                             )
                         )
+                        index += 1
                         break
                     }
                 }
             }
         }
         return results
+    }
+
+    private func aspectOffset(for aspect: AspectType, index: Int) -> CGFloat {
+        let base: CGFloat
+        switch aspect {
+        case .conjonction:
+            base = 0
+        case .sextile, .trigone:
+            base = 4
+        case .carre, .opposition:
+            base = -4
+        }
+        let oscillation = (index % 3) - 1
+        return base + CGFloat(oscillation) * 2
     }
 
     private var houseLines: [HouseLine] {
@@ -344,6 +568,8 @@ private struct PlanetLayout: Identifiable {
     let planet: PlanetPosition
     let angle: Double
     let radius: CGFloat
+    let labelPoint: CGPoint
+    let labelSide: LabelSide
 }
 
 private struct NatalAspect: Identifiable {
@@ -351,6 +577,28 @@ private struct NatalAspect: Identifiable {
     let startAngle: Double
     let endAngle: Double
     let color: Color
+    let radialOffset: CGFloat
+}
+
+private enum LabelSide {
+    case left
+    case right
+}
+
+private struct LabelCandidate: Identifiable {
+    let id: Int
+    let side: LabelSide
+    let targetY: CGFloat
+}
+
+private struct LabelStack: Identifiable {
+    let id: Int
+    let y: CGFloat
+}
+
+private struct ResolvedLabel {
+    let point: CGPoint
+    let side: LabelSide
 }
 
 private struct HouseLine: Identifiable {
@@ -682,4 +930,3 @@ struct NatalHousesSection: View {
 //
 //  Created by Carl  Ozee on 07/01/2026.
 //
-
