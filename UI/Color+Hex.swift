@@ -6,7 +6,7 @@ enum SystemColorHex {
     static let brown: UInt32 = 0xA2845E
     static let cyan: UInt32 = 0x32ADE6
     static let gray: UInt32 = 0x8E8E93
-    static let green: UInt32 = 0x34C759
+    static let green: UInt32 = 0x14FC4E
     static let indigo: UInt32 = 0x5856D6
     static let mint: UInt32 = 0x00C7BE
     static let orange: UInt32 = 0xFF9500
