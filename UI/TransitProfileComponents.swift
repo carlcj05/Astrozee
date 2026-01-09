@@ -22,6 +22,12 @@ struct NatalChartView: View {
             let planetBubbleMargin = size * 0.016
             let planetRadialStep = size * 0.065
             let degreeAnchorRadius = chartRadius * 0.995
+            let signDividerInnerRadius = innerRingRadius
+            let signDividerOuterRadius = houseRingRadius
+            let signSymbolRadius = (signDividerInnerRadius + signDividerOuterRadius) * 0.5
+            let houseLineInnerRadius = aspectRadius
+            let houseLineOuterRadius = innerRingRadius
+            let houseNumberRadius = (houseLineInnerRadius + houseLineOuterRadius) * 0.5
             
             ZStack {
                 Circle()
@@ -60,16 +66,25 @@ struct NatalChartView: View {
                 ForEach(0..<12, id: \.self) { index in
                     let angle = Double(index) * 30.0 - 90.0
                     let symbolAngle = Double(index) * 30.0 + 15.0 - 90.0
+
+                    Path { path in
+                        let lineStart = point(on: angle, radius: signDividerInnerRadius, center: center)
+                        let lineEnd = point(on: angle, radius: signDividerOuterRadius, center: center)
+                        path.move(to: lineStart)
+                        path.addLine(to: lineEnd)
+                    }
+                    .stroke(Color(hex: SystemColorHex.black).opacity(0.7), lineWidth: 1.1)
+
                     Text(zodiacSymbols[index])
                         .font(.system(size: size * 0.07, weight: .semibold))
                         .foregroundStyle(Color(hex: SystemColorHex.indigo).opacity(0.85))
-                        .position(point(on: symbolAngle, radius: chartRadius * 0.72, center: center))
+                        .position(point(on: symbolAngle, radius: signSymbolRadius, center: center))
                 }
 
                 ForEach(houseLines, id: \.index) { house in
                     let angle = house.angle - 90.0
-                    let lineStart = point(on: angle, radius: innerRingRadius, center: center)
-                    let lineEnd = point(on: angle, radius: outerRingRadius * 0.98, center: center)
+                    let lineStart = point(on: angle, radius: houseLineInnerRadius, center: center)
+                    let lineEnd = point(on: angle, radius: houseLineOuterRadius, center: center)
 
                     Path { path in
                         path.move(to: lineStart)
@@ -85,7 +100,7 @@ struct NatalChartView: View {
                     }
                     .stroke(Color(hex: SystemColorHex.black).opacity(0.8), lineWidth: 1.2)
 
-                    let labelPoint = point(on: house.midAngle - 90.0, radius: chartRadius * 0.52, center: center)
+                    let labelPoint = point(on: house.midAngle - 90.0, radius: houseNumberRadius, center: center)
                     Text("\(house.index)")
                         .font(.system(size: size * 0.03, weight: .semibold))
                         .foregroundStyle(Color(hex: SystemColorHex.black).opacity(0.85))
@@ -544,14 +559,6 @@ struct NatalPlanetLegend: View {
     }
 }
 
-struct DualityResult {
-    let masculine: Double
-    let feminine: Double
-
-    var masculinePercent: Int { Int(round(masculine * 100)) }
-    var femininePercent: Int { Int(round(feminine * 100)) }
-}
-
 struct NatalDualitySection: View {
     let result: DualityResult
 
@@ -740,3 +747,4 @@ struct NatalHousesSection: View {
 //
 //  Created by Carl  Ozee on 07/01/2026.
 //
+

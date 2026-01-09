@@ -93,10 +93,10 @@ enum ZodiacSign: String, CaseIterable {
 
 // MARK: - Couleurs Astrotheme Style
 extension Color {
-    static let astroFire = Color(red: 230/255, green: 50/255, blue: 40/255)
-    static let astroEarth = Color(red: 140/255, green: 110/255, blue: 40/255)
-    static let astroAir = Color(red: 0/255, green: 150/255, blue: 160/255)
-    static let astroWater = Color(red: 50/255, green: 80/255, blue: 200/255)
+    static let astroFire = Color(red: 230.0 / 255.0, green: 50.0 / 255.0, blue: 40.0 / 255.0)
+    static let astroEarth = Color(red: 140.0 / 255.0, green: 110.0 / 255.0, blue: 40.0 / 255.0)
+    static let astroAir = Color(red: 0.0 / 255.0, green: 150.0 / 255.0, blue: 160.0 / 255.0)
+    static let astroWater = Color(red: 50.0 / 255.0, green: 80.0 / 255.0, blue: 200.0 / 255.0)
     static let astroBackground = Color.white
     static let astroLines = Color.black
 }
@@ -264,12 +264,12 @@ struct TickRing: Shape {
             else { length = 4 }
 
             let start = CGPoint(
-                x: center.x + (radius - length) * cos(rad),
-                y: center.y + (radius - length) * sin(rad)
+                x: center.x + (radius - length) * CGFloat(cos(rad)),
+                y: center.y + (radius - length) * CGFloat(sin(rad))
             )
             let end = CGPoint(
-                x: center.x + radius * cos(rad),
-                y: center.y + radius * sin(rad)
+                x: center.x + radius * CGFloat(cos(rad)),
+                y: center.y + radius * CGFloat(sin(rad))
             )
 
             path.move(to: start)
@@ -437,9 +437,4 @@ struct AstroChart_Preview: PreviewProvider {
             .background(Color.white)
     }
 }
-//  Astrothemechartview.swift
-//  Astrozee
-//
-//  Created by Carl  Ozee on 09/01/2026.
-//
 

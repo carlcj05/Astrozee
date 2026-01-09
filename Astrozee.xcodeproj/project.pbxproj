@@ -40,6 +40,7 @@
 		309D5F572F103441008610B2 /* TransitMoodChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 309D5F562F103433008610B2 /* TransitMoodChartView.swift */; };
 		309D5F752F113161008610B2 /* Color+Hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 309D5F742F11314F008610B2 /* Color+Hex.swift */; };
 		309D5F772F117FFF008610B2 /* AstroThemeChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 309D5F762F117FF7008610B2 /* AstroThemeChartView.swift */; };
+		309D5F792F1183DA008610B2 /* DualityResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 309D5F782F1183D6008610B2 /* DualityResult.swift */; };
 		30E4878E2F0D106A00E3CB34 /* InterpretationModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30E4878D2F0D106200E3CB34 /* InterpretationModel.swift */; };
 		30E487902F0D109900E3CB34 /* AstrologyEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30E4878F2F0D109200E3CB34 /* AstrologyEngine.swift */; };
 		30E487922F0D10BD00E3CB34 /* TransitView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30E487912F0D10B600E3CB34 /* TransitView.swift */; };
@@ -116,6 +117,7 @@
 		309D5F562F103433008610B2 /* TransitMoodChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransitMoodChartView.swift; sourceTree = "<group>"; };
 		309D5F742F11314F008610B2 /* Color+Hex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Hex.swift"; sourceTree = "<group>"; };
 		309D5F762F117FF7008610B2 /* AstroThemeChartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AstroThemeChartView.swift; sourceTree = "<group>"; };
+		309D5F782F1183D6008610B2 /* DualityResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DualityResult.swift; sourceTree = "<group>"; };
 		30E4878D2F0D106200E3CB34 /* InterpretationModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InterpretationModel.swift; sourceTree = "<group>"; };
 		30E4878F2F0D109200E3CB34 /* AstrologyEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AstrologyEngine.swift; sourceTree = "<group>"; };
 		30E487912F0D10B600E3CB34 /* TransitView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransitView.swift; sourceTree = "<group>"; };
@@ -275,6 +277,7 @@
 		307F63AC2E68371A00645245 /* UI */ = {
 			isa = PBXGroup;
 			children = (
+				309D5F782F1183D6008610B2 /* DualityResult.swift */,
 				309D5F762F117FF7008610B2 /* AstroThemeChartView.swift */,
 				309D5F742F11314F008610B2 /* Color+Hex.swift */,
 				309D5F562F103433008610B2 /* TransitMoodChartView.swift */,
@@ -547,6 +550,7 @@
 				309D5F572F103441008610B2 /* TransitMoodChartView.swift in Sources */,
 				307F63D02E684C4500645245 /* sweph.c in Sources */,
 				306716722E96948C008E8A72 /* InterpretationService.swift in Sources */,
+				309D5F792F1183DA008610B2 /* DualityResult.swift in Sources */,
 				306716732E96948C008E8A72 /* TransitCalculator.swift in Sources */,
 				30217F7B2E69CF0800800987 /* ProfileListView.swift in Sources */,
 				30E487982F0D201B00E3CB34 /* TransitService.swift in Sources */,
