@@ -96,7 +96,7 @@ struct ProfileFormView: View {
                                         if !placeName.isEmpty { HStack { Text("Lieu"); Spacer(); Text(placeName) } }
                                     }
 
-                                    if let msg = errorMessage { Text(msg).foregroundStyle(.red) }
+                                    if let msg = errorMessage { Text(msg).foregroundStyle(Color(hex: SystemColorHex.red)) }
 
                                     HStack {
                                         Button("Annuler") { dismiss() }
@@ -177,3 +177,4 @@ struct ProfileFormView: View {
                             onSave(profile)
                         }
                     }
+

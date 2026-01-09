@@ -28,19 +28,19 @@ struct NatalChartView: View {
             
             ZStack {
                 Circle()
-                    .fill(Color.white)
+                    .fill(Color(hex: SystemColorHex.white))
                 
                 Circle()
-                    .stroke(Color.indigo.opacity(0.25), lineWidth: 2)
+                    .stroke(Color(hex: SystemColorHex.indigo).opacity(0.25), lineWidth: 2)
                     .frame(width: chartRadius * 2, height: chartRadius * 2)
                 
                 Circle()
-                    .stroke(Color.indigo.opacity(0.12), style: StrokeStyle(lineWidth: 1, dash: [4, 6]))
+                    .stroke(Color(hex: SystemColorHex.indigo).opacity(0.12), style: StrokeStyle(lineWidth: 1, dash: [4, 6]))
                     .frame(width: chartRadius * 2, height: chartRadius * 2)
                     .padding(chartRadius * 0.18)
 
                 Circle()
-                    .stroke(Color.indigo.opacity(0.2), lineWidth: 1)
+                    .stroke(Color(hex: SystemColorHex.indigo).opacity(0.2), lineWidth: 1)
                     .frame(width: houseRingRadius * 2, height: houseRingRadius * 2)
                 
                 ForEach(0..<360, id: \.self) { degree in
@@ -54,7 +54,7 @@ struct NatalChartView: View {
                         path.move(to: lineStart)
                         path.addLine(to: lineEnd)
                     }
-                    .stroke(Color.indigo.opacity(isMajor ? 0.5 : 0.25), lineWidth: isMajor ? 1.2 : 0.8)
+                    .stroke(Color(hex: SystemColorHex.indigo).opacity(isMajor ? 0.5 : 0.25), lineWidth: isMajor ? 1.2 : 0.8)
                 }
                 
                 ForEach(0..<12, id: \.self) { index in
@@ -66,11 +66,11 @@ struct NatalChartView: View {
                         path.move(to: lineStart)
                         path.addLine(to: lineEnd)
                     }
-                    .stroke(Color.indigo.opacity(0.12), lineWidth: 1)
+                    .stroke(Color(hex: SystemColorHex.indigo).opacity(0.12), lineWidth: 1)
                     
                     Text(zodiacSymbols[index])
                         .font(.system(size: size * 0.065, weight: .semibold))
-                        .foregroundStyle(Color.indigo.opacity(0.85))
+                        .foregroundStyle(Color(hex: SystemColorHex.indigo).opacity(0.85))
                         .position(point(on: angle, radius: chartRadius * 0.78, center: center))
                 }
 
@@ -83,7 +83,7 @@ struct NatalChartView: View {
                         path.move(to: lineStart)
                         path.addLine(to: lineEnd)
                     }
-                    .stroke(Color.purple.opacity(0.25), lineWidth: 1.2)
+                    .stroke(Color(hex: SystemColorHex.purple).opacity(0.25), lineWidth: 1.2)
 
                     Path { path in
                         let tickStart = point(on: angle, radius: houseRingRadius - 6, center: center)
@@ -91,12 +91,12 @@ struct NatalChartView: View {
                         path.move(to: tickStart)
                         path.addLine(to: tickEnd)
                     }
-                    .stroke(Color.black.opacity(0.6), lineWidth: 1.2)
+                    .stroke(Color(hex: SystemColorHex.black).opacity(0.6), lineWidth: 1.2)
 
                     let labelPoint = point(on: house.midAngle - 90.0, radius: chartRadius * 0.46, center: center)
                     Text("\(house.index)")
                         .font(.system(size: size * 0.032, weight: .semibold))
-                        .foregroundStyle(Color.black.opacity(0.75))
+                        .foregroundStyle(Color(hex: SystemColorHex.black).opacity(0.75))
                         .position(labelPoint)
                 }
 
@@ -114,9 +114,9 @@ struct NatalChartView: View {
                     let point = point(on: angle.longitude - 90.0, radius: chartRadius * 0.92, center: center)
                     Text(label)
                         .font(.system(size: size * 0.035, weight: .semibold))
-                        .foregroundStyle(Color.purple.opacity(0.8))
+                        .foregroundStyle(Color(hex: SystemColorHex.purple).opacity(0.8))
                         .padding(4)
-                        .background(Color.white.opacity(0.9), in: Capsule())
+                        .background(Color(hex: SystemColorHex.white).opacity(0.9), in: Capsule())
                         .position(point)
                 }
                 
@@ -148,7 +148,7 @@ struct NatalChartView: View {
                         path.move(to: basePoint)
                         path.addLine(to: planetPoint)
                     }
-                    .stroke(Color.black.opacity(0.45), lineWidth: 0.8)
+                    .stroke(Color(hex: SystemColorHex.black).opacity(0.45), lineWidth: 0.8)
                     
                     Button {
                         withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
@@ -157,17 +157,17 @@ struct NatalChartView: View {
                     } label: {
                         Text(planetSymbol(for: planet.name))
                             .font(.system(size: size * 0.068, weight: .bold))
-                            .foregroundStyle(isSelected ? Color.white : Color.indigo.opacity(0.9))
+                            .foregroundStyle(isSelected ? Color(hex: SystemColorHex.white) : Color(hex: SystemColorHex.indigo).opacity(0.9))
                             .frame(width: size * 0.095, height: size * 0.095)
                             .background(
                                 Circle()
-                                    .fill(isSelected ? Color.indigo : planetColor(for: planet.name))
+                                    .fill(isSelected ? Color(hex: SystemColorHex.indigo) : planetColor(for: planet.name))
                             )
                             .overlay(
                                 Circle()
-                                    .stroke(Color.white.opacity(0.75), lineWidth: isSelected ? 2 : 0.8)
+                                    .stroke(Color(hex: SystemColorHex.white).opacity(0.75), lineWidth: isSelected ? 2 : 0.8)
                             )
-                            .shadow(color: Color.indigo.opacity(isSelected ? 0.35 : 0.15), radius: 6, x: 0, y: 3)
+                            .shadow(color: Color(hex: SystemColorHex.indigo).opacity(isSelected ? 0.35 : 0.15), radius: 6, x: 0, y: 3)
                     }
                     .buttonStyle(.plain)
                     .position(planetPoint)
@@ -177,11 +177,11 @@ struct NatalChartView: View {
                         path.addLine(to: elbowPoint)
                         path.addLine(to: finalLabelPoint)
                     }
-                    .stroke(Color.black.opacity(0.45), style: StrokeStyle(lineWidth: 0.8, lineCap: .round, lineJoin: .round))
+                    .stroke(Color(hex: SystemColorHex.black).opacity(0.45), style: StrokeStyle(lineWidth: 0.8, lineCap: .round, lineJoin: .round))
 
                     Text(planet.degreeInSign)
                         .font(.system(size: size * 0.03, weight: .semibold))
-                        .foregroundStyle(Color.black.opacity(0.7))
+                        .foregroundStyle(Color(hex: SystemColorHex.black).opacity(0.7))
                         .position(finalLabelPoint)
                 }
                 
@@ -233,23 +233,23 @@ struct NatalChartView: View {
     
     private func planetColor(for name: String) -> Color {
         switch name.lowercased() {
-        case "soleil": return Color.orange.opacity(0.9)
-        case "lune": return Color.gray.opacity(0.6)
-        case "mercure": return Color.mint.opacity(0.7)
-        case "vénus", "venus": return Color.pink.opacity(0.7)
-        case "mars": return Color.red.opacity(0.75)
-        case "jupiter": return Color.teal.opacity(0.7)
-        case "saturne": return Color.brown.opacity(0.7)
-        case "uranus": return Color.cyan.opacity(0.7)
-        case "neptune": return Color.blue.opacity(0.7)
-        case "pluton": return Color.purple.opacity(0.7)
-        case "chiron": return Color.indigo.opacity(0.6)
-        case "cérès", "ceres": return Color.green.opacity(0.65)
-        case "pallas": return Color.teal.opacity(0.6)
-        case "junon", "juno": return Color.pink.opacity(0.6)
-        case "vesta": return Color.orange.opacity(0.65)
-        case "lilith": return Color.black.opacity(0.7)
-        default: return Color.indigo.opacity(0.6)
+        case "soleil": return Color(hex: SystemColorHex.orange).opacity(0.9)
+        case "lune": return Color(hex: SystemColorHex.gray).opacity(0.6)
+        case "mercure": return Color(hex: SystemColorHex.mint).opacity(0.7)
+        case "vénus", "venus": return Color(hex: SystemColorHex.pink).opacity(0.7)
+        case "mars": return Color(hex: SystemColorHex.red).opacity(0.75)
+        case "jupiter": return Color(hex: SystemColorHex.teal).opacity(0.7)
+        case "saturne": return Color(hex: SystemColorHex.brown).opacity(0.7)
+        case "uranus": return Color(hex: SystemColorHex.cyan).opacity(0.7)
+        case "neptune": return Color(hex: SystemColorHex.blue).opacity(0.7)
+        case "pluton": return Color(hex: SystemColorHex.purple).opacity(0.7)
+        case "chiron": return Color(hex: SystemColorHex.indigo).opacity(0.6)
+        case "cérès", "ceres": return Color(hex: SystemColorHex.green).opacity(0.65)
+        case "pallas": return Color(hex: SystemColorHex.teal).opacity(0.6)
+        case "junon", "juno": return Color(hex: SystemColorHex.pink).opacity(0.6)
+        case "vesta": return Color(hex: SystemColorHex.orange).opacity(0.65)
+        case "lilith": return Color(hex: SystemColorHex.black).opacity(0.7)
+        default: return Color(hex: SystemColorHex.indigo).opacity(0.6)
         }
     }
     
@@ -554,11 +554,11 @@ struct NatalChartView: View {
     private func colorForAspect(_ aspect: AspectType) -> Color {
         switch aspect {
         case .conjonction:
-            return .purple
+            return Color(hex: SystemColorHex.purple)
         case .sextile, .trigone:
-            return .blue
+            return Color(hex: SystemColorHex.blue)
         case .carre, .opposition:
-            return .red
+            return Color(hex: SystemColorHex.red)
         }
     }
 }
@@ -618,7 +618,7 @@ struct NatalPlanetDetailCard: View {
                     Text(planetSymbol(for: planet.name))
                         .font(.system(size: 28))
                         .frame(width: 44, height: 44)
-                        .background(Color.indigo.opacity(0.12), in: Circle())
+                        .background(Color(hex: SystemColorHex.indigo).opacity(0.12), in: Circle())
                     
                     VStack(alignment: .leading, spacing: 4) {
                         Text(planet.name)
@@ -632,14 +632,14 @@ struct NatalPlanetDetailCard: View {
                     
                     Text("Voir")
                         .font(.caption)
-                        .foregroundStyle(.indigo)
+                        .foregroundStyle(Color(hex: SystemColorHex.indigo))
                         .padding(.horizontal, 10)
                         .padding(.vertical, 6)
-                        .background(Color.indigo.opacity(0.12), in: Capsule())
+                        .background(Color(hex: SystemColorHex.indigo).opacity(0.12), in: Capsule())
                 }
                 .padding()
                 .frame(maxWidth: .infinity)
-                .background(Color.white.opacity(0.8))
+                .background(Color(hex: SystemColorHex.white).opacity(0.8))
                 .cornerRadius(14)
             } else {
                 Text("Touchez une planète pour découvrir son influence.")
@@ -694,7 +694,7 @@ struct NatalPlanetLegend: View {
                         Text(planetSymbol(for: planet.name))
                             .font(.system(size: 16))
                             .frame(width: 24, height: 24)
-                            .background(Color.indigo.opacity(isSelected ? 0.22 : 0.1), in: Circle())
+                            .background(Color(hex: SystemColorHex.indigo).opacity(isSelected ? 0.22 : 0.1), in: Circle())
                         Text(planet.name)
                             .font(.caption)
                             .foregroundStyle(.primary)
@@ -702,7 +702,7 @@ struct NatalPlanetLegend: View {
                     }
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
-                    .background(isSelected ? Color.indigo.opacity(0.12) : Color.white.opacity(0.6))
+                    .background(isSelected ? Color(hex: SystemColorHex.indigo).opacity(0.12) : Color(hex: SystemColorHex.white).opacity(0.6))
                     .cornerRadius(10)
                 }
                 .buttonStyle(.plain)
@@ -769,13 +769,13 @@ struct DualityDonutView: View {
     var body: some View {
         let masculinePercent = Int(round(normalizedMasculine * 100))
         let femininePercent = 100 - masculinePercent
-        let masculineColor = Color(red: 0.6, green: 0.9216, blue: 1.0)
-        let feminineColor = Color(red: 0.9451, green: 0.6, blue: 1.0)
+        let masculineColor = Color(hex: 0x99EBFF)
+        let feminineColor = Color(hex: 0xF199FF)
 
         VStack(spacing: 12) {
             ZStack {
                 Circle()
-                    .stroke(Color.black.opacity(0.08), lineWidth: 18)
+                    .stroke(Color(hex: SystemColorHex.black).opacity(0.08), lineWidth: 18)
 
                 Circle()
                     .trim(from: 0, to: normalizedMasculine)
@@ -853,7 +853,7 @@ struct NatalAnglesSection: View {
                     }
                     .padding(10)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.white.opacity(0.7))
+                    .background(Color(hex: SystemColorHex.white).opacity(0.7))
                     .cornerRadius(12)
                 }
 
@@ -868,7 +868,7 @@ struct NatalAnglesSection: View {
                     }
                     .padding(10)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.white.opacity(0.7))
+                    .background(Color(hex: SystemColorHex.white).opacity(0.7))
                     .cornerRadius(12)
                 }
             }
@@ -917,7 +917,7 @@ struct NatalHousesSection: View {
                     }
                     .padding(10)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.white.opacity(0.7))
+                    .background(Color(hex: SystemColorHex.white).opacity(0.7))
                     .cornerRadius(12)
                 }
             }

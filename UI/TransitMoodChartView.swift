@@ -413,13 +413,13 @@ private enum MoodCategory: String, CaseIterable, Identifiable {
     var color: Color {
         switch self {
         case .fluide:
-            return .green
+            return Color(hex: SystemColorHex.green)
         case .challenge:
-            return .red
+            return Color(hex: SystemColorHex.red)
         case .transformant:
-            return .purple
+            return Color(hex: SystemColorHex.purple)
         case .neutre:
-            return .blue
+            return Color(hex: SystemColorHex.blue)
         }
     }
 
@@ -483,11 +483,11 @@ private struct MoodTransitSummaryRow: View {
     private func colorForAspect(_ aspect: AspectType) -> Color {
         switch aspect {
         case .carre, .opposition:
-            return .red
+            return Color(hex: SystemColorHex.red)
         case .sextile, .trigone:
-            return .green
+            return Color(hex: SystemColorHex.green)
         case .conjonction:
-            return .blue
+            return Color(hex: SystemColorHex.blue)
         }
     }
 }
