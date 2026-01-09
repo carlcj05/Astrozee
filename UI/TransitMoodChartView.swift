@@ -5,7 +5,8 @@ import SwiftUI
 struct TransitMoodChartView: View {
     @ObservedObject var viewModel: TransitViewModel
     @State private var selectedWeek: MoodWeekKey?
-    @State private var selectedSignification: String?
+    @State private var selectedSignification: AttributedString?
+    @State private var selectedTransitId: UUID?
 
     var body: some View {
         VStack(spacing: 16) {
@@ -62,6 +63,10 @@ struct TransitMoodChartView: View {
                 return
             }
             selectedWeek = newKeys.first
+        }
+        .onChange(of: selectedWeek) { _ in
+            selectedTransitId = nil
+            selectedSignification = nil
         }
     }
 
@@ -151,8 +156,12 @@ struct TransitMoodChartView: View {
                             ForEach(selectedWeekTransits) { transit in
                                 Button {
                                     selectedSignification = significationText(for: transit)
+                                    selectedTransitId = transit.id
                                 } label: {
-                                    MoodTransitSummaryRow(transit: transit)
+                                    MoodTransitSummaryRow(
+                                        transit: transit,
+                                        isSelected: transit.id == selectedTransitId
+                                    )
                                 }
                                 .buttonStyle(.plain)
                             }
@@ -167,7 +176,7 @@ struct TransitMoodChartView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Signification")
                             .font(.headline)
-                        if let selectedSignification, selectedSignification != "—" {
+                        if let selectedSignification {
                             ScrollView {
                                 Text(selectedSignification)
                                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -279,22 +288,73 @@ struct TransitMoodChartView: View {
             .folding(options: .diacriticInsensitive, locale: .current)
     }
 
-    private func significationText(for transit: Transit) -> String {
+    private func significationText(for transit: Transit) -> AttributedString? {
         let interpretation = InterpretationService.shared.getInterpretation(for: transit)
         let essence = interpretation?.essence?.trimmingCharacters(in: .whitespacesAndNewlines)
         let influence = interpretation?.influence.trimmingCharacters(in: .whitespacesAndNewlines)
         let motsCles = interpretation?.motsCles?.trimmingCharacters(in: .whitespacesAndNewlines)
         let raw = essence?.isEmpty == false ? essence! : (motsCles?.isEmpty == false ? motsCles! : (influence ?? "—"))
-        return formatSignification(raw)
+        let formatted = formatSignification(raw)
+        return formatted.characters.isEmpty ? nil : formatted
     }
 
-    private func formatSignification(_ text: String) -> String {
+    private func formatSignification(_ text: String) -> AttributedString {
         let markers = ["✴️", "🔮", "❤️", "💼", "🧭", "🌱", "💡"]
-        var formatted = text
-        for marker in markers {
-            formatted = formatted.replacingOccurrences(of: marker, with: "\n\(marker)")
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        let sections = extractSignificationSections(from: trimmed, markers: markers)
+        guard !sections.isEmpty else {
+            return AttributedString(trimmed)
         }
-        return formatted.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        var result = AttributedString()
+        for (index, section) in sections.enumerated() {
+            let title = section.title.trimmingCharacters(in: .whitespacesAndNewlines)
+            let body = section.body.trimmingCharacters(in: .whitespacesAndNewlines)
+
+            var titleText = AttributedString(title)
+            titleText.font = .system(.body).bold()
+            result.append(titleText)
+
+            if !body.isEmpty {
+                result.append(AttributedString("\n"))
+                result.append(AttributedString(body))
+            }
+
+            if index < sections.count - 1 {
+                result.append(AttributedString("\n\n"))
+            }
+        }
+
+        return result
+    }
+
+    private func extractSignificationSections(from text: String, markers: [String]) -> [(title: String, body: String)] {
+        guard !text.isEmpty else { return [] }
+        var sectionStarts: [(marker: String, index: String.Index)] = []
+
+        for marker in markers {
+            var searchRange = text.startIndex..<text.endIndex
+            while let range = text.range(of: marker, range: searchRange) {
+                sectionStarts.append((marker, range.lowerBound))
+                searchRange = range.upperBound..<text.endIndex
+            }
+        }
+
+        let sortedStarts = sectionStarts.sorted { $0.index < $1.index }
+        guard !sortedStarts.isEmpty else { return [] }
+
+        var sections: [(title: String, body: String)] = []
+        for (index, start) in sortedStarts.enumerated() {
+            let endIndex = index + 1 < sortedStarts.count ? sortedStarts[index + 1].index : text.endIndex
+            let chunk = text[start.index..<endIndex]
+            let normalized = chunk.replacingOccurrences(of: "\r\n", with: "\n")
+            let lines = normalized.split(separator: "\n", omittingEmptySubsequences: false)
+            let title = lines.first.map(String.init) ?? String(chunk)
+            let body = lines.dropFirst().joined(separator: "\n")
+            sections.append((title: title.trimmingCharacters(in: .whitespacesAndNewlines),
+                             body: body.trimmingCharacters(in: .whitespacesAndNewlines)))
+        }
+        return sections
     }
 
     private func isInSelectedMonth(_ date: Date) -> Bool {
@@ -374,6 +434,7 @@ private enum MoodCategory: String, CaseIterable, Identifiable {
 
 private struct MoodTransitSummaryRow: View {
     let transit: Transit
+    let isSelected: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -389,6 +450,17 @@ private struct MoodTransitSummaryRow: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, 6)
+        .padding(.horizontal, 8)
+        .background(selectionBackground)
+    }
+
+    private var selectionBackground: some View {
+        RoundedRectangle(cornerRadius: 10)
+            .fill(isSelected ? Color.accentColor.opacity(0.15) : Color.clear)
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(isSelected ? Color.accentColor.opacity(0.4) : Color.clear, lineWidth: 1)
+            )
     }
 
     private var picText: String {
@@ -419,3 +491,4 @@ private struct MoodTransitSummaryRow: View {
         }
     }
 }
+

@@ -794,8 +794,8 @@ struct DualityDonutView: View {
             .frame(width: 140, height: 140)
 
             HStack(spacing: 20) {
-                DualityLabel(symbol: "♂", title: "Masculin", percent: masculinePercent, color: masculineColor)
                 DualityLabel(symbol: "♀", title: "Féminin", percent: femininePercent, color: feminineColor)
+                DualityLabel(symbol: "♂", title: "Masculin", percent: masculinePercent, color: masculineColor)
             }
         }
     }
