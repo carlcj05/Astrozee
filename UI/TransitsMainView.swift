@@ -33,7 +33,7 @@ class TransitViewModel: ObservableObject {
 struct TransitsMainView: View {
     let profile: Profile
     @StateObject private var viewModel = TransitViewModel()
-    @State private var activeTab = 0 // 0 = Profil, 1 = Période, 2 = Résultats
+    @State private var activeTab = 0 // 0 = Profil, 1 = Période, 2 = Résultats, 3 = Moodchart
     
     var body: some View {
         TabView(selection: $activeTab) {
@@ -58,6 +58,13 @@ struct TransitsMainView: View {
                     Label("Résultats", systemImage: "list.star")
                 }
                 .tag(2)
+
+            // --- ONGLET 4 : MOODCHART ---
+            TransitMoodChartView(viewModel: viewModel)
+                .tabItem {
+                    Label("Moodchart", systemImage: "chart.bar.fill")
+                }
+                .tag(3)
         }
         .navigationTitle("Météo Astrale")
         // FIX MAC: On applique .inline uniquement sur iOS
@@ -237,9 +244,9 @@ struct TransitProfileView: View {
               let moon = positions.first(where: { $0.name.lowercased() == "lune" })?.longitude else {
             return []
         }
-
+        
         let fortune = normalizeAngle(ascendant + moon - sun)
-
+        
         return [
             ChartPoint(
                 id: "fortune",
@@ -274,10 +281,10 @@ struct TransitProfileView: View {
 
     private func computeDualityResult(positions: [PlanetPosition], cusps: [HouseCusp], angles: [ChartAngle]) -> DualityResult {
         guard !positions.isEmpty else { return DualityResult(masculine: 0.5, feminine: 0.5) }
-
+        
         var masculineScore = 0.0
         var feminineScore = 0.0
-
+        
         let planetWeights: [String: Double] = [
             "soleil": 3,
             "lune": 3,
@@ -291,7 +298,7 @@ struct TransitProfileView: View {
             "neptune": 1,
             "pluton": 1
         ]
-
+        
         func addPolarity(for sign: String, weight: Double) {
             guard sign != "—" else { return }
             if isMasculineSign(sign) {
@@ -300,18 +307,18 @@ struct TransitProfileView: View {
                 feminineScore += weight
             }
         }
-
+        
         for position in positions {
             let key = position.name.lowercased()
             if let weight = planetWeights[key] {
                 addPolarity(for: position.sign, weight: weight)
             }
         }
-
+        
         if let ascendant = angles.first(where: { $0.id == "asc" }) {
             addPolarity(for: ascendant.sign, weight: 3)
         }
-
+        
         
         let total = max(masculineScore + feminineScore, 1)
         let masculine = masculineScore / total
@@ -332,11 +339,11 @@ struct TransitProfileView: View {
         guard cusps.count == 12 else { return nil }
         let sortedCusps = cusps.sorted { $0.id < $1.id }
         let normalized = normalizeAngle(longitude)
-
+        
         for index in 0..<sortedCusps.count {
             let start = normalizeAngle(sortedCusps[index].longitude)
             let end = normalizeAngle(sortedCusps[(index + 1) % sortedCusps.count].longitude)
-
+            
             if start <= end {
                 if normalized >= start && normalized < end {
                     return sortedCusps[index].id
@@ -363,7 +370,7 @@ struct TransitProfileView: View {
             "verseau": ["saturne", "uranus"],
             "poissons": ["jupiter", "neptune"]
         ]
-
+        
         let candidates = rulerMap[sign.lowercased()] ?? []
         return positions.first(where: { candidates.contains($0.name.lowercased()) })
     }
@@ -1136,7 +1143,7 @@ private struct TransitTableRow: View {
     }
 }
 
-private struct SignificationZoomView: View {
+struct SignificationZoomView: View {
     let text: String
     @Binding var isPresented: String?
 
