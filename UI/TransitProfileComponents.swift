@@ -209,7 +209,7 @@ struct NatalChartView: View {
     
     private func planetColor(for name: String) -> Color {
         switch name.lowercased() {
-        case "soleil": return Color(hex: SystemColorHex.orange).opacity(0.9)
+        case "soleil": return Color(hex: SystemColorHex.yellow).opacity(0.9)
         case "lune": return Color(hex: SystemColorHex.gray).opacity(0.6)
         case "mercure": return Color(hex: SystemColorHex.mint).opacity(0.7)
         case "vénus", "venus": return Color(hex: SystemColorHex.pink).opacity(0.7)

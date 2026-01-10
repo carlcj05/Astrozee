@@ -413,13 +413,13 @@ private enum MoodCategory: String, CaseIterable, Identifiable {
     var color: Color {
         switch self {
         case .fluide:
-            return Color(hex: SystemColorHex.green)
+            return Color(hex: SystemColorHex.green).opacity(0.8)
         case .challenge:
-            return Color(hex: SystemColorHex.red)
+            return Color(hex: SystemColorHex.red).opacity(0.8)
         case .transformant:
-            return Color(hex: SystemColorHex.purple)
+            return Color(hex: SystemColorHex.winered).opacity(0.8)
         case .neutre:
-            return Color(hex: SystemColorHex.blue)
+            return Color(hex: SystemColorHex.blue).opacity(0.8)
         }
     }
 

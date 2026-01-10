@@ -1116,12 +1116,14 @@ private struct TransitTableRow: View {
 
     private func colorForAspect(_ aspect: AspectType) -> Color {
         switch aspect {
-        case .carre, .opposition:
+        case .carre:
             return Color(hex: SystemColorHex.red)
         case .sextile, .trigone:
             return Color(hex: SystemColorHex.green)
         case .conjonction:
             return Color(hex: SystemColorHex.blue)
+        case .opposition:
+            return Color(hex: SystemColorHex.winered)
         }
     }
 }
