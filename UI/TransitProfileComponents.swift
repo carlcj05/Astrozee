@@ -6,6 +6,7 @@ struct NatalChartView: View {
     let houseCusps: [HouseCusp]
     let angles: [ChartAngle]
     @Binding var selectedPlanet: PlanetPosition?
+    private let zodiacOrientation: Double = -1.0
     
     var body: some View {
         GeometryReader { proxy in
@@ -53,8 +54,8 @@ struct NatalChartView: View {
                     let isMajor = degree % 10 == 0
                     let isMedium = degree % 5 == 0
                     let lineLength = isMajor ? chartRadius * 0.12 : (isMedium ? chartRadius * 0.085 : chartRadius * 0.05)
-                    let lineStart = point(on: Double(degree) - 90.0, radius: outerRingRadius - lineLength, center: center)
-                    let lineEnd = point(on: Double(degree) - 90.0, radius: outerRingRadius, center: center)
+                    let lineStart = point(on: orientedAngle(Double(degree)), radius: outerRingRadius - lineLength, center: center)
+                    let lineEnd = point(on: orientedAngle(Double(degree)), radius: outerRingRadius, center: center)
                     
                     Path { path in
                         path.move(to: lineStart)
@@ -64,8 +65,8 @@ struct NatalChartView: View {
                 }
                 
                 ForEach(0..<12, id: \.self) { index in
-                    let angle = Double(index) * 30.0 - 90.0
-                    let symbolAngle = Double(index) * 30.0 + 15.0 - 90.0
+                    let angle = orientedAngle(Double(index) * 30.0)
+                    let symbolAngle = orientedAngle(Double(index) * 30.0 + 15.0)
 
                     Path { path in
                         let lineStart = point(on: angle, radius: signDividerInnerRadius, center: center)
@@ -82,7 +83,7 @@ struct NatalChartView: View {
                 }
 
                 ForEach(houseLines, id: \.index) { house in
-                    let angle = house.angle - 90.0
+                    let angle = orientedAngle(house.angle)
                     let lineStart = point(on: angle, radius: houseLineInnerRadius, center: center)
                     let lineEnd = point(on: angle, radius: houseLineOuterRadius, center: center)
 
@@ -100,7 +101,7 @@ struct NatalChartView: View {
                     }
                     .stroke(Color(hex: SystemColorHex.black).opacity(0.8), lineWidth: 1.2)
 
-                    let labelPoint = point(on: house.midAngle - 90.0, radius: houseNumberRadius, center: center)
+                    let labelPoint = point(on: orientedAngle(house.midAngle), radius: houseNumberRadius, center: center)
                     Text("\(house.index)")
                         .font(.system(size: size * 0.03, weight: .semibold))
                         .foregroundStyle(Color(hex: SystemColorHex.black).opacity(0.85))
@@ -110,15 +111,15 @@ struct NatalChartView: View {
                 ForEach(aspects) { aspect in
                     Path { path in
                         let adjustedRadius = aspectRadius + aspect.radialOffset
-                        path.move(to: point(on: aspect.startAngle - 90.0, radius: adjustedRadius, center: center))
-                        path.addLine(to: point(on: aspect.endAngle - 90.0, radius: adjustedRadius, center: center))
+                        path.move(to: point(on: orientedAngle(aspect.startAngle), radius: adjustedRadius, center: center))
+                        path.addLine(to: point(on: orientedAngle(aspect.endAngle), radius: adjustedRadius, center: center))
                     }
                     .stroke(aspect.color.opacity(0.5), lineWidth: 0.6)
                 }
 
                 ForEach(angles) { angle in
                     let label = angleSymbol(for: angle)
-                    let point = point(on: angle.longitude - 90.0, radius: chartRadius * 0.98, center: center)
+                    let point = point(on: orientedAngle(angle.longitude), radius: chartRadius * 0.98, center: center)
                     Text(label)
                         .font(.system(size: size * 0.045, weight: .bold))
                         .foregroundStyle(Color(hex: SystemColorHex.black))
@@ -177,6 +178,10 @@ struct NatalChartView: View {
         let x = center.x + cos(radians) * radius
         let y = center.y + sin(radians) * radius
         return CGPoint(x: x, y: y)
+    }
+
+    private func orientedAngle(_ angle: Double) -> Double {
+        (angle * zodiacOrientation) - 90.0
     }
     
     private func planetSymbol(for name: String) -> String {
@@ -244,7 +249,7 @@ struct NatalChartView: View {
 
         for cluster in grouped {
             for (index, planet) in cluster.enumerated() {
-                let angle = planet.longitude - 90.0
+                let angle = orientedAngle(planet.longitude)
                 let radius = baseRadius + radialStep * CGFloat(index)
 
                 layouts.append(
@@ -747,4 +752,3 @@ struct NatalHousesSection: View {
 //
 //  Created by Carl  Ozee on 07/01/2026.
 //
-
