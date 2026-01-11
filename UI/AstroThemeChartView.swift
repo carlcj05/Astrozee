@@ -1,12 +1,11 @@
 import SwiftUI
 
 // MARK: - Modèles de données (Mock pour l'exemple)
-// J'ai créé ces structures pour rendre le code autonome, adapte-les à tes propres modèles.
 
 enum ElementType { case fire, earth, air, water }
 
 struct ChartData {
-    // Exemple basé sur ton screenshot (AC en Bélier)
+    // Exemple basé (AC en Bélier)
     static let ascendantDegree: Double = 15.7 // 15° Aries
 
     static let planets: [VisualPlanet] = [
