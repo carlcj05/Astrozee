@@ -90,7 +90,7 @@ struct TransitProfileView: View {
     var body: some View {
         ZStack {
             #if os(iOS)
-            Color.gray.opacity(0.1).ignoresSafeArea() // Fond gris clair sur iOS
+            Color(hex: SystemColorHex.gray).opacity(0.1).ignoresSafeArea() // Fond gris clair sur iOS
             #endif
             
             ScrollView {
@@ -99,7 +99,7 @@ struct TransitProfileView: View {
                     VStack(spacing: 8) {
                         Image(systemName: "person.crop.circle.fill")
                             .font(.system(size: 60))
-                            .foregroundStyle(.indigo)
+                            .foregroundStyle(Color(hex: SystemColorHex.indigo))
                             .padding(.bottom, 5)
                         
                         Text("Analyse pour \(profile.name)")
@@ -111,7 +111,7 @@ struct TransitProfileView: View {
                     .padding()
                     .frame(maxWidth: .infinity)
                     // FIX MAC: Fond blanc sur iOS, transparent ou adapté sur Mac
-                    .background(Color.white.opacity(0.8))
+                    .background(Color(hex: SystemColorHex.white).opacity(0.8))
                     .cornerRadius(15)
                     .padding(.horizontal)
                     
@@ -163,7 +163,7 @@ struct TransitProfileView: View {
                     .background(.ultraThinMaterial)
                     .cornerRadius(18)
                     .padding(.horizontal)
-                    .shadow(color: Color.black.opacity(0.08), radius: 12, x: 0, y: 6)
+                    .shadow(color: Color(hex: SystemColorHex.black).opacity(0.08), radius: 12, x: 0, y: 6)
                 }
                 .padding(.top)
                 .padding(.bottom, 24)
@@ -385,7 +385,7 @@ struct TransitDateSelectionView: View {
     var body: some View {
         ZStack {
             #if os(iOS)
-            Color.gray.opacity(0.1).ignoresSafeArea()
+            Color(hex: SystemColorHex.gray).opacity(0.1).ignoresSafeArea()
             #endif
             
             VStack(spacing: 30) {
@@ -398,7 +398,7 @@ struct TransitDateSelectionView: View {
                         .environment(\.locale, Locale(identifier: "fr_FR"))
                 }
                 .padding()
-                .background(Color.white.opacity(0.8))
+                .background(Color(hex: SystemColorHex.white).opacity(0.8))
                 .cornerRadius(15)
                 .padding(.horizontal)
                 
@@ -412,17 +412,17 @@ struct TransitDateSelectionView: View {
                 }) {
                     HStack {
                         if viewModel.isCalculating {
-                            ProgressView().tint(.white)
+                            ProgressView().tint(Color(hex: SystemColorHex.white))
                         } else {
                             Image(systemName: "sparkles")
                             Text("Lancer le Calcul")
                         }
                     }
                     .font(.headline)
-                    .foregroundColor(.white)
+                    .foregroundColor(Color(hex: SystemColorHex.white))
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(Color.indigo)
+                    .background(Color(hex: SystemColorHex.indigo))
                     .cornerRadius(12)
                 }
                 .buttonStyle(.plain)
@@ -515,7 +515,7 @@ struct TransitResultsView: View {
                                         }
                                     }
                                     .padding()
-                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .frame(minWidth: TransitColumnWidth.totalWidth, alignment: .leading)
                                     .background(.ultraThinMaterial)
                                     .cornerRadius(16)
                                 }
@@ -579,8 +579,7 @@ struct TransitResultsView: View {
         ].joined(separator: ",")
         
         let rows = viewModel.transits.map { transit in
-            let interpretation = InterpretationService.shared.getInterpretation(for: transit)
-            let signification = formatInterpretation(interpretation)
+            let signification = significationPreview(for: transit)
             let row = [
                 csvField(transit.transitPlanet),
                 csvField(transit.aspect.displayName),
@@ -600,28 +599,12 @@ struct TransitResultsView: View {
     }
     
     private func csvField(_ value: String) -> String {
-        let escaped = value.replacingOccurrences(of: "\"", with: "\"\"")
+        let normalized = value
+            .replacingOccurrences(of: "\r\n", with: " ")
+            .replacingOccurrences(of: "\n", with: " ")
+            .replacingOccurrences(of: "\r", with: " ")
+        let escaped = normalized.replacingOccurrences(of: "\"", with: "\"\"")
         return "\"\(escaped)\""
-    }
-    
-    private func formatInterpretation(_ interpretation: TransitInterpretation?) -> String {
-        guard let interpretation else { return "" }
-        let sections: [String] = [
-            interpretation.essence.map { "Essence: \($0)" },
-            interpretation.ceQuiPeutArriver.map { "Ce qui peut arriver: \($0)" },
-            interpretation.relations.map { "Relations: \($0)" },
-            interpretation.travail.map { "Travail: \($0)" },
-            interpretation.aEviter.map { "A éviter: \($0)" },
-            interpretation.aFaire.map { "A faire: \($0)" },
-            interpretation.motsCles.map { "Mots-cles: \($0)" },
-            !interpretation.conseils.isEmpty ? "Conseils: \(interpretation.conseils)" : nil
-        ].compactMap { $0 }
-        
-        if sections.isEmpty {
-            return interpretation.influence
-        }
-        
-        return sections.joined(separator: "\n")
     }
     
     private func influence(for transit: Transit) -> String {
@@ -861,7 +844,7 @@ struct TransitResultsView: View {
     }
 }
 
-private enum InfluenceGroup: Int, CaseIterable, Hashable, Identifiable {
+enum InfluenceGroup: Int, CaseIterable, Hashable, Identifiable {
     case currentMonth
     case oneMonthOffset
     case moreThanOneMonth
@@ -1133,12 +1116,14 @@ private struct TransitTableRow: View {
 
     private func colorForAspect(_ aspect: AspectType) -> Color {
         switch aspect {
-        case .carre, .opposition:
-            return .red
+        case .carre:
+            return Color(hex: SystemColorHex.red)
         case .sextile, .trigone:
-            return .green
+            return Color(hex: SystemColorHex.green)
         case .conjonction:
-            return .blue
+            return Color(hex: SystemColorHex.blue)
+        case .opposition:
+            return Color(hex: SystemColorHex.winered)
         }
     }
 }
@@ -1149,7 +1134,7 @@ struct SignificationZoomView: View {
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.35)
+            Color(hex: SystemColorHex.black).opacity(0.35)
                 .ignoresSafeArea()
                 .onTapGesture {
                     withAnimation(.easeInOut(duration: 0.2)) {
@@ -1185,7 +1170,7 @@ struct SignificationZoomView: View {
             .frame(maxWidth: 520)
             .background(.ultraThinMaterial)
             .cornerRadius(18)
-            .shadow(color: Color.black.opacity(0.2), radius: 20, x: 0, y: 8)
+            .shadow(color: Color(hex: SystemColorHex.black).opacity(0.2), radius: 20, x: 0, y: 8)
             .padding()
         }
     }
@@ -1217,6 +1202,59 @@ struct TransitCSVDocument: FileDocument {
     
     func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
         FileWrapper(regularFileWithContents: Data(csv.utf8))
+    }
+}
+
+struct TransitCSVExporter {
+    static func exportCSV(from groupedTransits: [(group: InfluenceGroup, transits: [Transit])]) -> String {
+        var rows: [String] = [
+            "Groupe;Pic;Planete transit;Aspect;Planete natale;Debut;Fin;Orbe;Meteo"
+        ]
+        let dateFormatter = DateFormatter()
+        dateFormatter.locale = Locale(identifier: "fr_FR")
+        dateFormatter.dateStyle = .medium
+        dateFormatter.timeStyle = .none
+        let picFormatter = DateFormatter()
+        picFormatter.locale = Locale(identifier: "fr_FR")
+        picFormatter.dateFormat = "dd MMM"
+
+        for group in groupedTransits {
+            for transit in group.transits {
+                let row = [
+                    group.group.title,
+                    picFormatter.string(from: transit.picDate),
+                    transit.transitPlanet,
+                    transit.aspect.displayName,
+                    transit.natalPlanet,
+                    dateFormatter.string(from: transit.startDate),
+                    dateFormatter.string(from: transit.endDate),
+                    String(format: "%.2f°", transit.orbe),
+                    transit.meteo
+                ]
+                rows.append(row.joined(separator: ";"))
+            }
+        }
+
+        return rows.joined(separator: "\n")
+    }
+}
+
+struct FileExporterView<Document: FileDocument>: View {
+    let document: Document
+    let filename: String
+    @Environment(\.dismiss) private var dismiss
+    @State private var isExporting = true
+
+    var body: some View {
+        Color.clear
+            .fileExporter(
+                isPresented: $isExporting,
+                document: document,
+                contentType: .commaSeparatedText,
+                defaultFilename: filename
+            ) { _ in
+                dismiss()
+            }
     }
 }
 

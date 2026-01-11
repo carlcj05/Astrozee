@@ -6,6 +6,7 @@ struct NatalChartView: View {
     let houseCusps: [HouseCusp]
     let angles: [ChartAngle]
     @Binding var selectedPlanet: PlanetPosition?
+    private let zodiacOrientation: Double = -1.0
     
     var body: some View {
         GeometryReader { proxy in
@@ -13,110 +14,121 @@ struct NatalChartView: View {
             let radius = size / 2
             let center = CGPoint(x: proxy.size.width / 2, y: proxy.size.height / 2)
             let chartRadius = radius * 0.84
-            let aspectRadius = chartRadius * 0.46
-            let houseRingRadius = chartRadius * 0.9
-            let planetBaseRadius = chartRadius * 0.98
-            let leaderStartRadius = chartRadius * 0.78
-            let planetBubbleSize = size * 0.095
-            let planetBubbleMargin = size * 0.012
+            let aspectRadius = chartRadius * 0.5
+            let houseRingRadius = chartRadius * 0.88
+            let outerRingRadius = chartRadius * 1.0
+            let innerRingRadius = chartRadius * 0.66
+            let planetBaseRadius = chartRadius * 1.12
+            let planetGlyphSize = size * 0.09
+            let planetBubbleMargin = size * 0.016
             let planetRadialStep = size * 0.065
-            let labelRadius = chartRadius * 1.08
-            let labelColumnOffset = chartRadius * 1.22
-            let labelMinSpacing = max(size * 0.045, 18)
-            let labelClampPadding = size * 0.045
-            let outerRingRadius = chartRadius * 1.02
+            let degreeAnchorRadius = chartRadius * 0.995
+            let signDividerInnerRadius = innerRingRadius
+            let signDividerOuterRadius = houseRingRadius
+            let signSymbolRadius = (signDividerInnerRadius + signDividerOuterRadius) * 0.5
+            let houseLineInnerRadius = aspectRadius
+            let houseLineOuterRadius = innerRingRadius
+            let houseNumberRadius = (houseLineInnerRadius + houseLineOuterRadius) * 0.5
             
             ZStack {
                 Circle()
-                    .fill(Color.white)
+                    .fill(Color(hex: SystemColorHex.white))
                 
                 Circle()
-                    .stroke(Color.indigo.opacity(0.25), lineWidth: 2)
-                    .frame(width: chartRadius * 2, height: chartRadius * 2)
+                    .stroke(Color(hex: SystemColorHex.black).opacity(0.9), lineWidth: 2.4)
+                    .frame(width: outerRingRadius * 2, height: outerRingRadius * 2)
                 
                 Circle()
-                    .stroke(Color.indigo.opacity(0.12), style: StrokeStyle(lineWidth: 1, dash: [4, 6]))
-                    .frame(width: chartRadius * 2, height: chartRadius * 2)
-                    .padding(chartRadius * 0.18)
+                    .stroke(Color(hex: SystemColorHex.black).opacity(0.65), lineWidth: 1.2)
+                    .frame(width: houseRingRadius * 2, height: houseRingRadius * 2)
 
                 Circle()
-                    .stroke(Color.indigo.opacity(0.2), lineWidth: 1)
-                    .frame(width: houseRingRadius * 2, height: houseRingRadius * 2)
-                
+                    .stroke(Color(hex: SystemColorHex.black).opacity(0.85), lineWidth: 1.4)
+                    .frame(width: innerRingRadius * 2, height: innerRingRadius * 2)
+
+                Circle()
+                    .stroke(Color(hex: SystemColorHex.black).opacity(0.85), lineWidth: 1.3)
+                    .frame(width: aspectRadius * 2, height: aspectRadius * 2)
+
                 ForEach(0..<360, id: \.self) { degree in
                     let isMajor = degree % 10 == 0
                     let isMedium = degree % 5 == 0
-                    let lineLength = isMajor ? chartRadius * 0.12 : (isMedium ? chartRadius * 0.08 : chartRadius * 0.05)
-                    let lineStart = point(on: Double(degree) - 90.0, radius: chartRadius - lineLength, center: center)
-                    let lineEnd = point(on: Double(degree) - 90.0, radius: chartRadius, center: center)
+                    let lineLength = isMajor ? chartRadius * 0.12 : (isMedium ? chartRadius * 0.085 : chartRadius * 0.05)
+                    let lineStart = point(on: orientedAngle(Double(degree)), radius: outerRingRadius - lineLength, center: center)
+                    let lineEnd = point(on: orientedAngle(Double(degree)), radius: outerRingRadius, center: center)
                     
                     Path { path in
                         path.move(to: lineStart)
                         path.addLine(to: lineEnd)
                     }
-                    .stroke(Color.indigo.opacity(isMajor ? 0.5 : 0.25), lineWidth: isMajor ? 1.2 : 0.8)
+                    .stroke(Color(hex: SystemColorHex.black).opacity(isMajor ? 0.9 : 0.65), lineWidth: isMajor ? 1.8 : (isMedium ? 1.3 : 0.9))
                 }
                 
                 ForEach(0..<12, id: \.self) { index in
-                    let angle = Double(index) * 30.0 - 90.0
-                    let lineStart = point(on: angle, radius: chartRadius * 0.38, center: center)
-                    let lineEnd = point(on: angle, radius: chartRadius * 0.98, center: center)
-                    
+                    let angle = orientedAngle(Double(index) * 30.0)
+                    let symbolAngle = orientedAngle(Double(index) * 30.0 + 15.0)
+
                     Path { path in
+                        let lineStart = point(on: angle, radius: signDividerInnerRadius, center: center)
+                        let lineEnd = point(on: angle, radius: signDividerOuterRadius, center: center)
                         path.move(to: lineStart)
                         path.addLine(to: lineEnd)
                     }
-                    .stroke(Color.indigo.opacity(0.12), lineWidth: 1)
-                    
+                    .stroke(Color(hex: SystemColorHex.black).opacity(0.7), lineWidth: 1.1)
+
                     Text(zodiacSymbols[index])
-                        .font(.system(size: size * 0.065, weight: .semibold))
-                        .foregroundStyle(Color.indigo.opacity(0.85))
-                        .position(point(on: angle, radius: chartRadius * 0.78, center: center))
+                        .font(.system(size: size * 0.07, weight: .semibold))
+                        .foregroundStyle(Color(hex: SystemColorHex.indigo).opacity(0.85))
+                        .position(point(on: symbolAngle, radius: signSymbolRadius, center: center))
                 }
 
                 ForEach(houseLines, id: \.index) { house in
-                    let angle = house.angle - 90.0
-                    let lineStart = point(on: angle, radius: chartRadius * 0.32, center: center)
-                    let lineEnd = point(on: angle, radius: chartRadius * 0.98, center: center)
+                    let angle = orientedAngle(house.angle)
+                    let lineStart = point(on: angle, radius: houseLineInnerRadius, center: center)
+                    let lineEnd = point(on: angle, radius: houseLineOuterRadius, center: center)
 
                     Path { path in
                         path.move(to: lineStart)
                         path.addLine(to: lineEnd)
                     }
-                    .stroke(Color.purple.opacity(0.25), lineWidth: 1.2)
+                    .stroke(Color(hex: SystemColorHex.black).opacity(0.7), lineWidth: 1.1)
 
                     Path { path in
-                        let tickStart = point(on: angle, radius: houseRingRadius - 6, center: center)
-                        let tickEnd = point(on: angle, radius: houseRingRadius + 6, center: center)
+                        let tickStart = point(on: angle, radius: houseRingRadius - 7, center: center)
+                        let tickEnd = point(on: angle, radius: houseRingRadius + 7, center: center)
                         path.move(to: tickStart)
                         path.addLine(to: tickEnd)
                     }
-                    .stroke(Color.black.opacity(0.6), lineWidth: 1.2)
+                    .stroke(Color(hex: SystemColorHex.black).opacity(0.8), lineWidth: 1.2)
 
-                    let labelPoint = point(on: house.midAngle - 90.0, radius: chartRadius * 0.46, center: center)
+                    let labelPoint = point(on: orientedAngle(house.midAngle), radius: houseNumberRadius, center: center)
                     Text("\(house.index)")
-                        .font(.system(size: size * 0.032, weight: .semibold))
-                        .foregroundStyle(Color.black.opacity(0.75))
+                        .font(.system(size: size * 0.03, weight: .semibold))
+                        .foregroundStyle(Color(hex: SystemColorHex.black).opacity(0.85))
                         .position(labelPoint)
                 }
 
                 ForEach(aspects) { aspect in
                     Path { path in
                         let adjustedRadius = aspectRadius + aspect.radialOffset
-                        path.move(to: point(on: aspect.startAngle - 90.0, radius: adjustedRadius, center: center))
-                        path.addLine(to: point(on: aspect.endAngle - 90.0, radius: adjustedRadius, center: center))
+                        path.move(to: point(on: orientedAngle(aspect.startAngle), radius: adjustedRadius, center: center))
+                        path.addLine(to: point(on: orientedAngle(aspect.endAngle), radius: adjustedRadius, center: center))
                     }
                     .stroke(aspect.color.opacity(0.5), lineWidth: 0.6)
                 }
 
                 ForEach(angles) { angle in
                     let label = angleSymbol(for: angle)
-                    let point = point(on: angle.longitude - 90.0, radius: chartRadius * 0.92, center: center)
+                    let point = point(on: orientedAngle(angle.longitude), radius: chartRadius * 0.98, center: center)
                     Text(label)
-                        .font(.system(size: size * 0.035, weight: .semibold))
-                        .foregroundStyle(Color.purple.opacity(0.8))
-                        .padding(4)
-                        .background(Color.white.opacity(0.9), in: Capsule())
+                        .font(.system(size: size * 0.045, weight: .bold))
+                        .foregroundStyle(Color(hex: SystemColorHex.black))
+                        .padding(6)
+                        .background(Color(hex: SystemColorHex.white), in: Circle())
+                        .overlay(
+                            Circle()
+                                .stroke(Color(hex: SystemColorHex.black), lineWidth: 1.4)
+                        )
                         .position(point)
                 }
                 
@@ -124,81 +136,41 @@ struct NatalChartView: View {
                     positions: positions,
                     baseRadius: planetBaseRadius,
                     center: center,
-                    bubbleDiameter: planetBubbleSize,
+                    bubbleDiameter: planetGlyphSize,
                     bubbleMargin: planetBubbleMargin,
-                    radialStep: planetRadialStep,
-                    labelRadius: labelRadius,
-                    labelColumnOffset: labelColumnOffset,
-                    labelMinSpacing: labelMinSpacing,
-                    labelClampPadding: labelClampPadding
+                    radialStep: planetRadialStep
                 )) { layout in
                     let planet = layout.planet
                     let planetPoint = point(on: layout.angle, radius: layout.radius, center: center)
+                    let degreePoint = point(on: layout.angle, radius: degreeAnchorRadius, center: center)
                     let isSelected = planet.id == selectedPlanet?.id
-                    let finalLabelPoint = layout.labelPoint
-                    let elbowPoint = elbowPoint(
-                        for: finalLabelPoint,
-                        center: center,
-                        radius: outerRingRadius,
-                        side: layout.labelSide
-                    )
 
-                    Path { path in
-                        let basePoint = point(on: layout.angle, radius: leaderStartRadius, center: center)
-                        path.move(to: basePoint)
-                        path.addLine(to: planetPoint)
-                    }
-                    .stroke(Color.black.opacity(0.45), lineWidth: 0.8)
-                    
                     Button {
                         withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
                             selectedPlanet = planet
                         }
                     } label: {
                         Text(planetSymbol(for: planet.name))
-                            .font(.system(size: size * 0.068, weight: .bold))
-                            .foregroundStyle(isSelected ? Color.white : Color.indigo.opacity(0.9))
-                            .frame(width: size * 0.095, height: size * 0.095)
-                            .background(
-                                Circle()
-                                    .fill(isSelected ? Color.indigo : planetColor(for: planet.name))
-                            )
-                            .overlay(
-                                Circle()
-                                    .stroke(Color.white.opacity(0.75), lineWidth: isSelected ? 2 : 0.8)
-                            )
-                            .shadow(color: Color.indigo.opacity(isSelected ? 0.35 : 0.15), radius: 6, x: 0, y: 3)
+                            .font(.system(size: planetGlyphSize, weight: .bold))
+                            .foregroundStyle(planetColor(for: planet.name))
+                            .shadow(color: Color(hex: SystemColorHex.black).opacity(isSelected ? 0.25 : 0.1), radius: 2, x: 0, y: 1)
                     }
                     .buttonStyle(.plain)
                     .position(planetPoint)
 
                     Path { path in
                         path.move(to: planetPoint)
-                        path.addLine(to: elbowPoint)
-                        path.addLine(to: finalLabelPoint)
+                        path.addLine(to: degreePoint)
                     }
-                    .stroke(Color.black.opacity(0.45), style: StrokeStyle(lineWidth: 0.8, lineCap: .round, lineJoin: .round))
+                    .stroke(planetColor(for: planet.name).opacity(0.9), style: StrokeStyle(lineWidth: 1.2, lineCap: .round, lineJoin: .round))
 
-                    Text(planet.degreeInSign)
-                        .font(.system(size: size * 0.03, weight: .semibold))
-                        .foregroundStyle(Color.black.opacity(0.7))
-                        .position(finalLabelPoint)
                 }
-                
-                VStack(spacing: 4) {
-                    Text("Carte astrale")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Text("Touchez une planète")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                }
-                .position(center)
             }
         }
         .aspectRatio(1, contentMode: .fit)
-        .frame(height: 360)
+        .frame(height: 460)
         .frame(maxWidth: .infinity)
+        .drawingGroup()
     }
     
     private func point(on angleDegrees: Double, radius: CGFloat, center: CGPoint) -> CGPoint {
@@ -206,6 +178,10 @@ struct NatalChartView: View {
         let x = center.x + cos(radians) * radius
         let y = center.y + sin(radians) * radius
         return CGPoint(x: x, y: y)
+    }
+
+    private func orientedAngle(_ angle: Double) -> Double {
+        (angle * zodiacOrientation) - 90.0
     }
     
     private func planetSymbol(for name: String) -> String {
@@ -233,23 +209,23 @@ struct NatalChartView: View {
     
     private func planetColor(for name: String) -> Color {
         switch name.lowercased() {
-        case "soleil": return Color.orange.opacity(0.9)
-        case "lune": return Color.gray.opacity(0.6)
-        case "mercure": return Color.mint.opacity(0.7)
-        case "vénus", "venus": return Color.pink.opacity(0.7)
-        case "mars": return Color.red.opacity(0.75)
-        case "jupiter": return Color.teal.opacity(0.7)
-        case "saturne": return Color.brown.opacity(0.7)
-        case "uranus": return Color.cyan.opacity(0.7)
-        case "neptune": return Color.blue.opacity(0.7)
-        case "pluton": return Color.purple.opacity(0.7)
-        case "chiron": return Color.indigo.opacity(0.6)
-        case "cérès", "ceres": return Color.green.opacity(0.65)
-        case "pallas": return Color.teal.opacity(0.6)
-        case "junon", "juno": return Color.pink.opacity(0.6)
-        case "vesta": return Color.orange.opacity(0.65)
-        case "lilith": return Color.black.opacity(0.7)
-        default: return Color.indigo.opacity(0.6)
+        case "soleil": return Color(hex: SystemColorHex.yellow).opacity(0.9)
+        case "lune": return Color(hex: SystemColorHex.gray).opacity(0.6)
+        case "mercure": return Color(hex: SystemColorHex.mint).opacity(0.7)
+        case "vénus", "venus": return Color(hex: SystemColorHex.pink).opacity(0.7)
+        case "mars": return Color(hex: SystemColorHex.red).opacity(0.75)
+        case "jupiter": return Color(hex: SystemColorHex.teal).opacity(0.7)
+        case "saturne": return Color(hex: SystemColorHex.brown).opacity(0.7)
+        case "uranus": return Color(hex: SystemColorHex.cyan).opacity(0.7)
+        case "neptune": return Color(hex: SystemColorHex.blue).opacity(0.7)
+        case "pluton": return Color(hex: SystemColorHex.purple).opacity(0.7)
+        case "chiron": return Color(hex: SystemColorHex.indigo).opacity(0.6)
+        case "cérès", "ceres": return Color(hex: SystemColorHex.green).opacity(0.65)
+        case "pallas": return Color(hex: SystemColorHex.teal).opacity(0.6)
+        case "junon", "juno": return Color(hex: SystemColorHex.pink).opacity(0.6)
+        case "vesta": return Color(hex: SystemColorHex.orange).opacity(0.65)
+        case "lilith": return Color(hex: SystemColorHex.black).opacity(0.7)
+        default: return Color(hex: SystemColorHex.indigo).opacity(0.6)
         }
     }
     
@@ -259,11 +235,7 @@ struct NatalChartView: View {
         center: CGPoint,
         bubbleDiameter: CGFloat,
         bubbleMargin: CGFloat,
-        radialStep: CGFloat,
-        labelRadius: CGFloat,
-        labelColumnOffset: CGFloat,
-        labelMinSpacing: CGFloat,
-        labelClampPadding: CGFloat
+        radialStep: CGFloat
     ) -> [PlanetLayout] {
         let sorted = positions.sorted { $0.longitude < $1.longitude }
         let minSeparation = bubbleSeparationDegrees(
@@ -275,59 +247,22 @@ struct NatalChartView: View {
         var layouts: [PlanetLayout] = []
         layouts.reserveCapacity(positions.count)
 
-        var candidates: [LabelCandidate] = []
-        candidates.reserveCapacity(positions.count)
-
         for cluster in grouped {
-            let count = cluster.count
             for (index, planet) in cluster.enumerated() {
-                let angle = planet.longitude - 90.0
+                let angle = orientedAngle(planet.longitude)
                 let radius = baseRadius + radialStep * CGFloat(index)
-                let angleRadians = angle * .pi / 180
-                let isRight = cos(angleRadians) >= 0
-                let targetY = center.y + sin(angleRadians) * labelRadius
-                let side: LabelSide = isRight ? .right : .left
 
                 layouts.append(
                     PlanetLayout(
                         id: planet.id,
                         planet: planet,
                         angle: angle,
-                        radius: radius,
-                        labelPoint: .zero,
-                        labelSide: side
-                    )
-                )
-                candidates.append(
-                    LabelCandidate(
-                        id: planet.id,
-                        side: side,
-                        targetY: targetY
+                        radius: radius
                     )
                 )
             }
         }
-
-        let resolved = resolveLabelPositions(
-            candidates: candidates,
-            center: center,
-            labelColumnOffset: labelColumnOffset,
-            minSpacing: labelMinSpacing,
-            clampPadding: labelClampPadding,
-            labelRadius: labelRadius
-        )
-
-        return layouts.map { layout in
-            guard let resolvedLabel = resolved[layout.id] else { return layout }
-            return PlanetLayout(
-                id: layout.id,
-                planet: layout.planet,
-                angle: layout.angle,
-                radius: layout.radius,
-                labelPoint: resolvedLabel.point,
-                labelSide: resolvedLabel.side
-            )
-        }
+        return layouts
     }
 
     private func bubbleSeparationDegrees(radius: CGFloat, bubbleDiameter: CGFloat, bubbleMargin: CGFloat) -> Double {
@@ -372,81 +307,6 @@ struct NatalChartView: View {
         return clusters
     }
     
-    private func resolveLabelPositions(
-        candidates: [LabelCandidate],
-        center: CGPoint,
-        labelColumnOffset: CGFloat,
-        minSpacing: CGFloat,
-        clampPadding: CGFloat,
-        labelRadius: CGFloat
-    ) -> [Int: ResolvedLabel] {
-        let boundsTop = center.y - labelRadius + clampPadding
-        let boundsBottom = center.y + labelRadius - clampPadding
-
-        let rightCandidates = candidates.filter { $0.side == .right }
-        let leftCandidates = candidates.filter { $0.side == .left }
-
-        let rightLabels = stackLabels(
-            candidates: rightCandidates,
-            top: boundsTop,
-            bottom: boundsBottom,
-            minSpacing: minSpacing
-        )
-        let leftLabels = stackLabels(
-            candidates: leftCandidates,
-            top: boundsTop,
-            bottom: boundsBottom,
-            minSpacing: minSpacing
-        )
-
-        var resolved: [Int: ResolvedLabel] = [:]
-        for label in rightLabels {
-            resolved[label.id] = ResolvedLabel(
-                point: CGPoint(x: center.x + labelColumnOffset, y: label.y),
-                side: .right
-            )
-        }
-        for label in leftLabels {
-            resolved[label.id] = ResolvedLabel(
-                point: CGPoint(x: center.x - labelColumnOffset, y: label.y),
-                side: .left
-            )
-        }
-        return resolved
-    }
-
-    private func stackLabels(
-        candidates: [LabelCandidate],
-        top: CGFloat,
-        bottom: CGFloat,
-        minSpacing: CGFloat
-    ) -> [LabelStack] {
-        let sorted = candidates.sorted { $0.targetY < $1.targetY }
-        var stacked: [LabelStack] = []
-        stacked.reserveCapacity(sorted.count)
-        var previousY: CGFloat?
-
-        for candidate in sorted {
-            let target = candidate.targetY
-            let y = max(target, (previousY ?? target) + (previousY == nil ? 0 : minSpacing))
-            stacked.append(LabelStack(id: candidate.id, y: y))
-            previousY = y
-        }
-
-        guard let first = stacked.first, let last = stacked.last else { return stacked }
-        var shift: CGFloat = 0
-        if first.y < top {
-            shift = top - first.y
-        } else if last.y > bottom {
-            shift = bottom - last.y
-        }
-
-        if shift != 0 {
-            stacked = stacked.map { LabelStack(id: $0.id, y: $0.y + shift) }
-        }
-
-        return stacked
-    }
     
     private func shortestAngleDistance(_ a: Double, _ b: Double) -> Double {
         var value = (a - b).truncatingRemainder(dividingBy: 360)
@@ -455,13 +315,6 @@ struct NatalChartView: View {
         return abs(value)
     }
 
-    private func elbowPoint(for labelPoint: CGPoint, center: CGPoint, radius: CGFloat, side: LabelSide) -> CGPoint {
-        let dy = labelPoint.y - center.y
-        let clamped = max(radius * radius - dy * dy, 0)
-        let dx = sqrt(clamped)
-        let x = center.x + (side == .right ? dx : -dx)
-        return CGPoint(x: x, y: labelPoint.y)
-    }
 
     private var aspects: [NatalAspect] {
         let planets = positions
@@ -554,11 +407,11 @@ struct NatalChartView: View {
     private func colorForAspect(_ aspect: AspectType) -> Color {
         switch aspect {
         case .conjonction:
-            return .purple
+            return Color(hex: SystemColorHex.purple)
         case .sextile, .trigone:
-            return .blue
+            return Color(hex: SystemColorHex.blue)
         case .carre, .opposition:
-            return .red
+            return Color(hex: SystemColorHex.red)
         }
     }
 }
@@ -568,8 +421,6 @@ private struct PlanetLayout: Identifiable {
     let planet: PlanetPosition
     let angle: Double
     let radius: CGFloat
-    let labelPoint: CGPoint
-    let labelSide: LabelSide
 }
 
 private struct NatalAspect: Identifiable {
@@ -578,27 +429,6 @@ private struct NatalAspect: Identifiable {
     let endAngle: Double
     let color: Color
     let radialOffset: CGFloat
-}
-
-private enum LabelSide {
-    case left
-    case right
-}
-
-private struct LabelCandidate: Identifiable {
-    let id: Int
-    let side: LabelSide
-    let targetY: CGFloat
-}
-
-private struct LabelStack: Identifiable {
-    let id: Int
-    let y: CGFloat
-}
-
-private struct ResolvedLabel {
-    let point: CGPoint
-    let side: LabelSide
 }
 
 private struct HouseLine: Identifiable {
@@ -618,7 +448,7 @@ struct NatalPlanetDetailCard: View {
                     Text(planetSymbol(for: planet.name))
                         .font(.system(size: 28))
                         .frame(width: 44, height: 44)
-                        .background(Color.indigo.opacity(0.12), in: Circle())
+                        .background(Color(hex: SystemColorHex.indigo).opacity(0.12), in: Circle())
                     
                     VStack(alignment: .leading, spacing: 4) {
                         Text(planet.name)
@@ -632,14 +462,14 @@ struct NatalPlanetDetailCard: View {
                     
                     Text("Voir")
                         .font(.caption)
-                        .foregroundStyle(.indigo)
+                        .foregroundStyle(Color(hex: SystemColorHex.indigo))
                         .padding(.horizontal, 10)
                         .padding(.vertical, 6)
-                        .background(Color.indigo.opacity(0.12), in: Capsule())
+                        .background(Color(hex: SystemColorHex.indigo).opacity(0.12), in: Capsule())
                 }
                 .padding()
                 .frame(maxWidth: .infinity)
-                .background(Color.white.opacity(0.8))
+                .background(Color(hex: SystemColorHex.white).opacity(0.8))
                 .cornerRadius(14)
             } else {
                 Text("Touchez une planète pour découvrir son influence.")
@@ -694,7 +524,7 @@ struct NatalPlanetLegend: View {
                         Text(planetSymbol(for: planet.name))
                             .font(.system(size: 16))
                             .frame(width: 24, height: 24)
-                            .background(Color.indigo.opacity(isSelected ? 0.22 : 0.1), in: Circle())
+                            .background(Color(hex: SystemColorHex.indigo).opacity(isSelected ? 0.22 : 0.1), in: Circle())
                         Text(planet.name)
                             .font(.caption)
                             .foregroundStyle(.primary)
@@ -702,7 +532,7 @@ struct NatalPlanetLegend: View {
                     }
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
-                    .background(isSelected ? Color.indigo.opacity(0.12) : Color.white.opacity(0.6))
+                    .background(isSelected ? Color(hex: SystemColorHex.indigo).opacity(0.12) : Color(hex: SystemColorHex.white).opacity(0.6))
                     .cornerRadius(10)
                 }
                 .buttonStyle(.plain)
@@ -734,14 +564,6 @@ struct NatalPlanetLegend: View {
     }
 }
 
-struct DualityResult {
-    let masculine: Double
-    let feminine: Double
-
-    var masculinePercent: Int { Int(round(masculine * 100)) }
-    var femininePercent: Int { Int(round(feminine * 100)) }
-}
-
 struct NatalDualitySection: View {
     let result: DualityResult
 
@@ -769,13 +591,13 @@ struct DualityDonutView: View {
     var body: some View {
         let masculinePercent = Int(round(normalizedMasculine * 100))
         let femininePercent = 100 - masculinePercent
-        let masculineColor = Color(red: 0.6, green: 0.9216, blue: 1.0)
-        let feminineColor = Color(red: 0.9451, green: 0.6, blue: 1.0)
+        let masculineColor = Color(hex: 0x99EBFF)
+        let feminineColor = Color(hex: 0xF199FF)
 
         VStack(spacing: 12) {
             ZStack {
                 Circle()
-                    .stroke(Color.black.opacity(0.08), lineWidth: 18)
+                    .stroke(Color(hex: SystemColorHex.black).opacity(0.08), lineWidth: 18)
 
                 Circle()
                     .trim(from: 0, to: normalizedMasculine)
@@ -853,7 +675,7 @@ struct NatalAnglesSection: View {
                     }
                     .padding(10)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.white.opacity(0.7))
+                    .background(Color(hex: SystemColorHex.white).opacity(0.7))
                     .cornerRadius(12)
                 }
 
@@ -868,7 +690,7 @@ struct NatalAnglesSection: View {
                     }
                     .padding(10)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.white.opacity(0.7))
+                    .background(Color(hex: SystemColorHex.white).opacity(0.7))
                     .cornerRadius(12)
                 }
             }
@@ -917,7 +739,7 @@ struct NatalHousesSection: View {
                     }
                     .padding(10)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.white.opacity(0.7))
+                    .background(Color(hex: SystemColorHex.white).opacity(0.7))
                     .cornerRadius(12)
                 }
             }
